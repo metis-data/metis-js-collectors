@@ -1,0 +1,53 @@
+{
+  "name": "sequelize-express-example",
+  "version": "0.0.1",
+  "description": "> TODO: description",
+  "author": "ItzikBraun <itzik.braun@gmail.com>",
+  "homepage": "https://github.com/metis-data/dba.ai#readme",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "types": "dist/index.js",
+  "directories": {
+    "lib": "dist"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metis-data/dba.ai.git"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/tsc --project ./tsconfig.json",
+    "nodemon": "nodemon --config nodemon.json src/index.ts",
+    "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts",
+    "dev": "./node_modules/.bin/tsc --project ./tsconfig.json --watch & NODE_ENV=development ts-node-dev lib/index.ts",
+    "prod": "./node_modules/.bin/tsc --project ./tsconfig.json --watch & NODE_ENV=production node dist/app",
+    "test": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1",
+    "lint": "eslint --fix ./**/*.ts",
+    "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w",
+    "start": "node dist/index.js"
+  },
+  "bugs": {
+    "url": "https://github.com/metis-data/dba.ai/issues"
+  },
+  "dependencies": {
+    "@metis-data/sequelize-interceptor": "^0.0.1",
+    "@types/node": "^18.0.3",
+    "@types/validator": "^13.7.4",
+    "config": "^3.3.6",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "js-yaml": "^4.1.0",
+    "pg": "^8.7.3",
+    "pg-hstore": "^2.3.4",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^6.21.2",
+    "sequelize-typescript": "^2.1.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/sequelize": "^4.28.14",
+    "ts-node-dev": "^1.1.8"
+  }
+}
