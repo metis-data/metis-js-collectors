@@ -12,5 +12,5 @@
     "emitDecoratorMetadata": true
   },
   "include": ["**/*.ts"],
-  "exclude": ["**/*.models.ts"]
+  "exclude": ["**/*.models.ts", "dist"]
 }

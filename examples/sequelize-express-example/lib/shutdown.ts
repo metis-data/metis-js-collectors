@@ -1,10 +1,14 @@
 import { Server } from "http";
 
-export default function gracefulShutDown(server: Server): () => void {
+function gracefulShutDown(
+  server: Server,
+  shutdownInstrumentation: () => Promise<void>,
+): () => void {
   return function () {
     console.log("Received kill signal, shutting down gracefully");
     server.close(async () => {
       console.log("Closed out remaining connections");
+      await shutdownInstrumentation();
       process.exit(0);
     });
 
@@ -15,4 +19,16 @@ export default function gracefulShutDown(server: Server): () => void {
       process.exit(1);
     }, 5000);
   };
+}
+
+export default function setupShutdown(
+  server: Server,
+  shutdownInstrumentation: () => Promise<void>,
+) {
+  process.on("uncaughtException", (err) => {
+    console.error(err);
+  });
+
+  process.on("SIGTERM", gracefulShutDown(server, shutdownInstrumentation));
+  process.on("SIGINT", gracefulShutDown(server, shutdownInstrumentation));
 }

@@ -1,13 +1,13 @@
-import { Tracer, default as api } from "@opentelemetry/api";
+import { Tracer } from "@opentelemetry/api";
 import * as express from "express";
 import getSequelize from "./sequelize-provider";
-import gracefulShutDown from "./shutdown";
 import Client from "./client";
+import * as http from "http";
 
 export default function start(
   _: Tracer,
   shutdownInstrumentation: () => Promise<void>,
-) {
+): http.Server {
   const app = express();
   const port = 3000;
   const sequelize = getSequelize();
@@ -35,14 +35,7 @@ export default function start(
     res.send({});
   });
 
-  const server = app.listen(port, () => {
+  return app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
   });
-
-  process.on("uncaughtException", (err) => {
-    console.error(err);
-  });
-
-  process.on("SIGTERM", gracefulShutDown(server));
-  process.on("SIGINT", gracefulShutDown(server));
 }

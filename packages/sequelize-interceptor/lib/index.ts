@@ -1,7 +1,6 @@
 import { Span, Tracer } from "@opentelemetry/api";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
-import { SequelizeInstrumentation } from "opentelemetry-instrumentation-sequelize";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import {
   markSpan,
@@ -9,10 +8,11 @@ import {
   MetisRemoteExporter,
   getResource,
 } from "@metis-data/base-interceptor";
-
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
+import SequelizeQueryRunner from "./sequelize-query-runner";
+import PatchedSequelizeInstrumentation from "./patched-instrumentation";
 
 function getMetisExporter(
   exporterUrl: string,
@@ -48,6 +48,7 @@ export function instrument(
   exporterApiKey: string,
   serviceName: string,
   serviceVersion: string,
+  sequelize: any,
   printToConsole: boolean = false,
 ): { tracer: Tracer; uninstrument: () => Promise<void> } {
   if (!shouldInstrument()) {
@@ -68,9 +69,12 @@ export function instrument(
     new BatchSpanProcessor(exporter, DEFAULT_BATCH_PROCESSOR_CONFIG),
   );
 
-  const sequelizeInstrumentation = new SequelizeInstrumentation({
-    queryHook: attachTraceIdToQuery,
-  });
+  const sequelizeInstrumentation = new PatchedSequelizeInstrumentation(
+    new SequelizeQueryRunner(sequelize),
+    {
+      queryHook: async (span: Span) => attachTraceIdToQuery(span),
+    },
+  );
 
   const httpInstrumentation = new HttpInstrumentation({
     ignoreOutgoingRequestHook: () => true,
@@ -78,6 +82,7 @@ export function instrument(
   });
 
   const expressInstrumentation = new ExpressInstrumentation({
+    // @ts-expect-error;
     ignoreLayersType: ["middleware", "request_handler"],
   });
 

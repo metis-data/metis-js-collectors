@@ -1,0 +1,41 @@
+name: Create and publish CLI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+jobs:
+  # This workflow contains multiple jobs
+  build_cli:
+    timeout-minutes: 4
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.5]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: setup node
+        uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: |
+          npm install
+          lerna link
+          lerna list
+          lerna bootstrap
+      - name: Build
+        run: |
+          lerna run --parallel build
+      - name: Test
+        run: |
+          lerna run test

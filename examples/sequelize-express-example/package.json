@@ -23,7 +23,6 @@
     "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts",
     "dev": "./node_modules/.bin/tsc --project ./tsconfig.json --watch & NODE_ENV=development ts-node-dev lib/index.ts",
     "prod": "./node_modules/.bin/tsc --project ./tsconfig.json --watch & NODE_ENV=production node dist/app",
-    "test": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1",
     "lint": "eslint --fix ./**/*.ts",
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w",
     "start": "node dist/index.js"
@@ -33,6 +32,7 @@
   },
   "dependencies": {
     "@metis-data/sequelize-interceptor": "^0.0.1",
+    "@opentelemetry/instrumentation": "^0.30.0",
     "@types/node": "^18.0.3",
     "@types/validator": "^13.7.4",
     "config": "^3.3.6",

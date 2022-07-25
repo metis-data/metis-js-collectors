@@ -1,6 +1,11 @@
 import { Span } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
-import { TRACK_BY, DB_STATEMENT_METIS, DB_STATEMENT } from "./constants";
+import {
+  TRACK_BY,
+  DB_STATEMENT_METIS,
+  DB_STATEMENT,
+  DB_STATEMENT_PLAN_METIS,
+} from "./constants";
 import { extractAdditionalTagsFromEnvVar } from "./env";
 import { make } from "./resource";
 
@@ -21,7 +26,14 @@ export function attachTraceIdToQuery(span: Span) {
   span.setAttribute(DB_STATEMENT_METIS, fixedQuery);
 }
 
+export function addPlanToSpan(span: Span, plan: any) {
+  const planStr = JSON.stringify(plan, null, 0);
+  span.setAttribute(DB_STATEMENT_PLAN_METIS, planStr);
+}
+
 export { default as MetisRemoteExporter } from "./metis-remote-exporter";
+
+export { getPGPlan, QueryRunner, PlanType } from "./plan";
 
 export function getResource(
   serviceName: string,
