@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@work-github.com:metis-data/js-interceptors.git"
+    "url": "git@github.com:metis-data/js-interceptors.git"
   },
   "devDependencies": {
     "@types/jest": "^28.1.4",
