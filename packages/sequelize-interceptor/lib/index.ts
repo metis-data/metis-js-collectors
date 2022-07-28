@@ -13,22 +13,21 @@ import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import SequelizeQueryRunner from "./sequelize-query-runner";
 import PatchedSequelizeInstrumentation from "./patched-instrumentation";
+import { PlanType } from "@metis-data/base-interceptor/dist/plan";
 
 function getMetisExporter(
   exporterUrl: string,
   exporterApiKey: string,
   print: boolean = false,
 ) {
-  return new MetisRemoteExporter(
-    exporterUrl,
-    exporterApiKey,
-    (data: string[]) => {
+  return new MetisRemoteExporter(exporterUrl, exporterApiKey, {
+    postHook: (data: string[]) => {
       if (print) {
         const items = data.map((i: string) => JSON.parse(i));
         console.log(JSON.stringify(items, null, 2));
       }
     },
-  );
+  });
 }
 
 function shouldInstrument() {
@@ -49,6 +48,7 @@ export function instrument(
   serviceName: string,
   serviceVersion: string,
   sequelize: any,
+  planType: PlanType = PlanType.ESTIMATED,
   printToConsole: boolean = false,
 ): { tracer: Tracer; uninstrument: () => Promise<void> } {
   if (!shouldInstrument()) {
@@ -71,6 +71,7 @@ export function instrument(
 
   const sequelizeInstrumentation = new PatchedSequelizeInstrumentation(
     new SequelizeQueryRunner(sequelize),
+    planType,
     {
       queryHook: async (span: Span) => attachTraceIdToQuery(span),
     },
@@ -109,3 +110,5 @@ export function instrument(
     },
   };
 }
+
+export { PlanType } from "@metis-data/base-interceptor";

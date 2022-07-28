@@ -9,6 +9,7 @@ import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { DB_STATEMENT_METIS, TRACK_BY } from "./constants";
 import fetch from "node-fetch";
 import snakecaseKeys = require("snakecase-keys");
+import { MetisRemoteExporterOptions } from "./types";
 
 class MetisRemoteExporter implements SpanExporter {
   private _sendingPromises: Promise<unknown>[] = [];
@@ -17,11 +18,11 @@ class MetisRemoteExporter implements SpanExporter {
   constructor(
     private exporterUrl: string,
     private exporterApiKey: string,
-    private postHook: (data: string[]) => void = () => {},
+    private exporterOptions: MetisRemoteExporterOptions,
   ) {
     this.exporterUrl = exporterUrl;
     this.exporterApiKey = exporterApiKey;
-    this.postHook = postHook;
+    this.exporterOptions = exporterOptions;
   }
 
   private static error(e: any) {
@@ -97,18 +98,22 @@ class MetisRemoteExporter implements SpanExporter {
     return newSpan;
   }
 
-  private sendSpan(data: any) {
-    return fetch(this.exporterUrl, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    })
-      .then(() => {
-        return { code: ExportResultCode.SUCCESS };
-      })
-      .catch((e: any) => {
-        return MetisRemoteExporter.error(e);
-      });
+  private async sendSpan(data: any) {
+    try {
+      if (this.exporterOptions?.postFn) {
+        await this.exporterOptions.postFn(data);
+      } else {
+        await fetch(this.exporterUrl, {
+          method: "POST",
+          headers: this.getHeaders(),
+          body: JSON.stringify(data),
+        });
+      }
+
+      return { code: ExportResultCode.SUCCESS };
+    } catch (e) {
+      return MetisRemoteExporter.error(e);
+    }
   }
 
   export(
@@ -136,11 +141,16 @@ class MetisRemoteExporter implements SpanExporter {
           JSON.stringify(this.exportInfo(span), null, 0),
         );
 
-      this.postHook(data);
+      try {
+        this.exporterOptions?.postHook(data);
+      } catch (ignore: any) {
+        // Ignore errors in hooks.
+      }
 
-      const promise = this.sendSpan(data).then(() =>
-        resultCallback({ code: ExportResultCode.SUCCESS }),
+      const promise = this.sendSpan(data).then((result) =>
+        resultCallback(result),
       );
+
       this._sendingPromises.push(promise);
       const popPromise = () => {
         const index = this._sendingPromises.indexOf(promise);

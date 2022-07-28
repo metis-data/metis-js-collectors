@@ -20,6 +20,7 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc --project ./tsconfig.json",
     "test": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1",
+    "test-watch": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1 --watch",
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w"
   },
   "repository": {

@@ -1,4 +1,4 @@
-import { instrument } from "@metis-data/sequelize-interceptor";
+import { instrument, PlanType } from "@metis-data/sequelize-interceptor";
 import getSequelize from "./sequelize-provider";
 
 const sequelize = getSequelize();
@@ -21,6 +21,7 @@ const { tracer, uninstrument } = instrument(
   "sequelize-express-example",
   "0.0.1",
   sequelize,
+  PlanType.ESTIMATED,
   true,
 );
 

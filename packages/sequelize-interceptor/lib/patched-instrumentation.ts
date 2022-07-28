@@ -15,10 +15,12 @@ import {
 export default class PatchedSequelizeInstrumentation extends SequelizeInstrumentation {
   constructor(
     private queryRunner: QueryRunner,
-    config?: SequelizeInstrumentationConfig,
+    private planType: PlanType = PlanType.ESTIMATED,
+    config: SequelizeInstrumentationConfig = {},
   ) {
     super(config);
     this.queryRunner = queryRunner;
+    this.planType = planType;
   }
 
   private setWrapped(obj: any, wrapped: boolean): void {
@@ -40,16 +42,21 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
       "query",
       function (original: () => Promise<any>) {
         return async function (sql: any, _: any) {
-          // Getting the span, this should be the query span.
-          const span = trace.getSpan(context.active());
-          const query = sql?.query ? sql.query : sql;
-          const plan = await getPGPlan(
-            query,
-            PlanType.ESTIMATED,
-            self.queryRunner,
-          );
+          try {
+            // Getting the span, this should be the query span.
+            const span = trace.getSpan(context.active());
+            const query = sql?.query ? sql.query : sql;
+            const plan = await getPGPlan(
+              query,
+              self.planType,
+              self.queryRunner,
+            );
 
-          addPlanToSpan(span, plan);
+            addPlanToSpan(span, plan);
+          } catch (e: any) {
+            // TODO: error handler?
+            console.error(e);
+          }
 
           // Executing the actual function.
           return await original.apply(this, arguments);
