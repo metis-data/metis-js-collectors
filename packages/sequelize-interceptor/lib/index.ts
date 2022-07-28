@@ -9,8 +9,14 @@ import {
   getResource,
 } from "@metis-data/base-interceptor";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
+import {
+  HttpInstrumentation,
+  IgnoreIncomingRequestFunction,
+} from "@opentelemetry/instrumentation-http";
+import {
+  ExpressInstrumentation,
+  ExpressLayerType,
+} from "@opentelemetry/instrumentation-express";
 import SequelizeQueryRunner from "./sequelize-query-runner";
 import PatchedSequelizeInstrumentation from "./patched-instrumentation";
 import { PlanType } from "@metis-data/base-interceptor/dist/plan";
@@ -50,6 +56,7 @@ export function instrument(
   sequelize: any,
   planType: PlanType = PlanType.ESTIMATED,
   printToConsole: boolean = false,
+  ignoreIncomingRequestHook: IgnoreIncomingRequestFunction,
 ): { tracer: Tracer; uninstrument: () => Promise<void> } {
   if (!shouldInstrument()) {
     return;
@@ -79,12 +86,15 @@ export function instrument(
 
   const httpInstrumentation = new HttpInstrumentation({
     ignoreOutgoingRequestHook: () => true,
+    ignoreIncomingRequestHook,
     requestHook: markSpan,
   });
 
   const expressInstrumentation = new ExpressInstrumentation({
-    // @ts-expect-error;
-    ignoreLayersType: ["middleware", "request_handler"],
+    ignoreLayersType: [
+      ExpressLayerType.MIDDLEWARE,
+      ExpressLayerType.REQUEST_HANDLER,
+    ],
   });
 
   // Makes sure we keep the same context between different async

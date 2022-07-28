@@ -15,6 +15,8 @@ Object.keys(require.cache)
     delete require.cache[moduleName];
   });
 
+const IGNORE = ["/favicon.ico", "/shutdown-instrumentation"];
+
 const { tracer, uninstrument } = instrument(
   process.env.METIS_EXPORTER_URL,
   process.env.METIS_EXPORTER_API_KEY,
@@ -23,6 +25,9 @@ const { tracer, uninstrument } = instrument(
   sequelize,
   PlanType.ESTIMATED,
   true,
+  (request) => {
+    return IGNORE.includes(request.url);
+  },
 );
 
 import startServer from "./server";

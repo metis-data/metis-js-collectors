@@ -15,7 +15,7 @@ export function markSpan(span: Span) {
 
 export function getQueryFromSpan(span: Span) {
   // @ts-expect-error; There is no attributes property or accessor in the Span interface.
-  return span.attributes[DB_STATEMENT];
+  return span.attributes?.[DB_STATEMENT];
 }
 
 export function attachTraceIdToQuery(span: Span) {
