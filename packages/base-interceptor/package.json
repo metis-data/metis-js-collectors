@@ -38,7 +38,6 @@
     "@opentelemetry/semantic-conventions": "^1.4.0"
   },
   "dependencies": {
-    "node-fetch": "2",
     "snakecase-keys": "^5.4.2",
     "sql-query-identifier": "^2.3.0"
   }

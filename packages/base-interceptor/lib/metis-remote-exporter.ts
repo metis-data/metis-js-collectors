@@ -7,9 +7,9 @@ import {
 import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { DB_STATEMENT_METIS, TRACK_BY } from "./constants";
-import fetch from "node-fetch";
 import snakecaseKeys = require("snakecase-keys");
 import { MetisRemoteExporterOptions } from "./types";
+import { post } from "./request";
 
 class MetisRemoteExporter implements SpanExporter {
   private _sendingPromises: Promise<unknown>[] = [];
@@ -32,10 +32,11 @@ class MetisRemoteExporter implements SpanExporter {
     };
   }
 
-  private getHeaders() {
+  private getHeaders(data: string) {
     return {
       Accept: "application/json",
       "Content-Type": "application/json",
+      "Content-Length": data.length,
       "x-api-key": this.exporterApiKey,
     };
   }
@@ -103,11 +104,12 @@ class MetisRemoteExporter implements SpanExporter {
       if (this.exporterOptions?.postFn) {
         await this.exporterOptions.postFn(data);
       } else {
-        await fetch(this.exporterUrl, {
+        const dataString = JSON.stringify(data);
+        const options = {
           method: "POST",
-          headers: this.getHeaders(),
-          body: JSON.stringify(data),
-        });
+          headers: this.getHeaders(dataString),
+        };
+        await post(this.exporterUrl, dataString, options);
       }
 
       return { code: ExportResultCode.SUCCESS };
