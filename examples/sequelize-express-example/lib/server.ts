@@ -3,6 +3,8 @@ import * as express from "express";
 import getSequelize from "./sequelize-provider";
 import Client from "./client";
 import * as http from "http";
+import City from "./models/cities.model";
+import StatesProvince from "./models/state.model";
 
 export default function start(
   _: Tracer,
@@ -28,6 +30,24 @@ export default function start(
         country,
       });
     }
+  });
+
+  app.get("/cities/:cityId(\\d+)", async (req: any, res: any) => {
+    const city = await client.getCityById(parseInt(req.params.cityId));
+    const state = await client.getStateById(city.state_province_id);
+    res.send({
+      city,
+      state,
+    });
+  });
+
+  app.get("/fail", async (_: any, res: any) => {
+    try {
+      await client.raw("SELECT * FROM NoWhere");
+    } catch (e: any) {
+      // Ignore
+    }
+    res.send({});
   });
 
   app.get("/shutdown-instrumentation", async (_: any, res: any) => {
