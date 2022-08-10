@@ -18,6 +18,7 @@ const QUERY = "SELECT * FROM Table";
 describe("extractAdditionalTagsFromEnvVar", () => {
   let queryRunner: any;
   let sequelize: any;
+  let errorHandler: (error: any) => void;
   let instrumentation: PatchedSequelizeInstrumentation;
 
   beforeEach(() => {
@@ -34,9 +35,12 @@ describe("extractAdditionalTagsFromEnvVar", () => {
       },
     };
 
+    errorHandler = jest.fn();
+
     instrumentation = new PatchedSequelizeInstrumentation(
       queryRunner,
       PlanType.ESTIMATED,
+      errorHandler,
       {},
     );
   });
@@ -54,10 +58,9 @@ describe("extractAdditionalTagsFromEnvVar", () => {
   });
 
   it("should catch exceptions", async () => {
+    const error = new Error("should be handled");
     // @ts-expect-error
-    getPGPlan.mockImplementation(() =>
-      Promise.reject(new Error("should be handled")),
-    );
+    getPGPlan.mockImplementation(() => Promise.reject(error));
 
     // @ts-expect-error
     instrumentation.patch(sequelize, "0.0.1");
@@ -73,6 +76,8 @@ describe("extractAdditionalTagsFromEnvVar", () => {
     // Another check that the exception occurred if
     // this function was not reached.
     expect(addPlanToSpan).toBeCalledTimes(0);
+
+    expect(errorHandler).toBeCalledWith(error);
   });
 
   it("should get query from object", async () => {

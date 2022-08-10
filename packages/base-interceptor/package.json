@@ -35,10 +35,13 @@
   "peerDependencies": {
     "@opentelemetry/resources": "^1.4.0",
     "@opentelemetry/sdk-trace-node": "^1.4.0",
+    "@opentelemetry/instrumentation": "^0.31.0",
     "@opentelemetry/semantic-conventions": "^1.4.0"
   },
   "dependencies": {
     "snakecase-keys": "^5.4.2",
-    "sql-query-identifier": "^2.3.0"
+    "sql-query-identifier": "^2.3.0",
+    "@sentry/node": "^7.7.0",
+    "source-map-support": "^0.5.21"
   }
 }

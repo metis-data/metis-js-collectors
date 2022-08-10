@@ -1,37 +1,34 @@
-import { instrument, PlanType } from "@metis-data/sequelize-interceptor";
-import getSequelize from "./sequelize-provider";
+import { InstrumentationResult } from "@metis-data/base-interceptor";
+import { instrument } from "@metis-data/sequelize-express-interceptor";
+import { newSequelizeInstance } from "sequelize-client";
+import setupShutdown from "./shutdown";
+import credentials from "./credentials";
 
-const sequelize = getSequelize();
-
-// Sequelize must be imported after setting up the interceptor
-// but we need it inside of it so we are in a catch 22.
-// To solve it we delete the modules after  we use them.
-Object.keys(require.cache)
-  .filter(
-    (key: string) =>
-      key.includes("sequelize-typescript") || key.includes("sequelize"),
-  )
-  .forEach((moduleName) => {
-    delete require.cache[moduleName];
-  });
-
-const IGNORE = ["/favicon.ico", "/shutdown-instrumentation"];
-
-const { tracer, uninstrument } = instrument(
-  process.env.METIS_EXPORTER_URL,
-  process.env.METIS_EXPORTER_API_KEY,
-  "sequelize-express-example",
-  "0.0.1",
-  sequelize,
-  PlanType.ESTIMATED,
-  true,
-  (request) => {
-    return IGNORE.includes(request.url);
+// The instrumentation result returns a tracer and an async function.
+// The tracer can be used for captuting traces manually.
+// The function is used to stop the instrumentation.
+const instrumentationResult: InstrumentationResult = instrument(
+  process.env.METIS_EXPORTER_URL, // The url of the exporter
+  process.env.METIS_EXPORTER_API_KEY, // Metis API key for the exporter
+  "sequelize-express-example", // The name of the service
+  process.env.npm_package_version, // The version of the service
+  newSequelizeInstance(credentials), // The Sequelize instance for getting the plan
+  {
+    errorHandler: (error: any) => {
+      console.error(error);
+    }, // Error handler, errors are still reporterd to our Sentry
+    getPlan: true, // Get the plan for each intercepted query (default to true)
+    excludedUrls: [/favicon.ico/, /shutdown-instrumentation/], // URLs to exclude from tracing
+    printToConsole: true, // Print outgoing spans in console (default to false, passed to exporter)
   },
 );
 
+// Loading the server after setup of instrumentation because the setup
+// is patching dependencies that would be used in the server.
 import startServer from "./server";
-import setupShutdown from "./shutdown";
 
-const server = startServer(tracer, uninstrument);
-setupShutdown(server, uninstrument);
+if (instrumentationResult) {
+  const { tracer, uninstrument } = instrumentationResult;
+  const server = startServer(tracer, uninstrument);
+  setupShutdown(server, uninstrument);
+}

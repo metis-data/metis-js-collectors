@@ -1,0 +1,43 @@
+{
+  "name": "prisma-client",
+  "version": "0.0.1",
+  "description": "> TODO: description",
+  "author": "itzikmetis <itzikb@metisdata.io>",
+  "homepage": "",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "types": "dist/index.js",
+  "directories": {
+    "lib": "dist",
+    "test": "tests"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "@metis-data:registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/tsc --project ./tsconfig.json",
+    "test": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1",
+    "test-watch": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1 --watch",
+    "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w",
+    "generate": "./node_modules/.bin/prisma generate"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:metis-data/js-interceptors.git"
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.4",
+    "prisma": "^4.1.1",
+    "ts-jest": "^28.0.5",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "db-client": "^0.0.1"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^4.1.1"
+  }
+}

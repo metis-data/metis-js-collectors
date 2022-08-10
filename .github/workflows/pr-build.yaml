@@ -2,12 +2,12 @@ name: Create and publish CLI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
     types: [opened, synchronize]
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   # This workflow contains multiple jobs

@@ -1,10 +1,8 @@
+import * as http from "http";
 import { Tracer } from "@opentelemetry/api";
 import * as express from "express";
-import getSequelize from "./sequelize-provider";
-import Client from "./client";
-import * as http from "http";
-import City from "./models/cities.model";
-import StatesProvince from "./models/state.model";
+import { newSequelizeClient } from "sequelize-client";
+import credentials from "./credentials";
 
 export default function start(
   _: Tracer,
@@ -12,8 +10,7 @@ export default function start(
 ): http.Server {
   const app = express();
   const port = 3000;
-  const sequelize = getSequelize();
-  const client = new Client(sequelize);
+  const client = newSequelizeClient(credentials);
 
   app.get("/countries", async (req: any, res: any) => {
     const countries = await client.getCountries();
@@ -21,11 +18,13 @@ export default function start(
   });
 
   app.get("/countries/:countryId(\\d+)", async (req: any, res: any) => {
-    const country = await client.getCountryById(parseInt(req.params.countryId));
     const randomBoolean = Math.random() < 0.5;
     if (randomBoolean) {
       res.status(500).send("random error");
     } else {
+      const country = await client.getCountryById(
+        parseInt(req.params.countryId),
+      );
       res.send({
         country,
       });
@@ -44,7 +43,7 @@ export default function start(
   app.get("/fail", async (_: any, res: any) => {
     try {
       await client.raw("SELECT * FROM NoWhere");
-    } catch (e: any) {
+    } catch (_: any) {
       // Ignore
     }
     res.send({});

@@ -102,18 +102,21 @@ describe("export", () => {
   const setupAndGetData = () => {
     let hookData: string[];
     let postData: string[];
-
+    let hookCalled = false;
+    let postCalled = false;
     exporter = setup({
       postHook: (d: string[]) => {
         hookData = d;
+        hookCalled = true;
       },
       postFn: (d: string[]) => {
         postData = d;
+        postCalled = true;
         return Promise.resolve();
       },
     });
 
-    return () => ({ hookData, postData });
+    return () => ({ hookData, postData, hookCalled, postCalled });
   };
 
   const callExport: (spans: ReadableSpan[]) => Promise<ExportResult> = (
@@ -160,11 +163,14 @@ describe("export", () => {
     });
   });
 
-  it("should not throw", async () => {
+  it("should not throw, it should call handler", async () => {
     // Sending undefined span should never happen by the system
     // and it would cause an exception so it’s useful for this test.
+    const options = { errorHandler: jest.fn() };
+    exporter = setup(options);
     const result = await callExport(undefined);
     expect(result.code).toBe(ExportResultCode.FAILED);
+    expect(options.errorHandler).toBeCalledTimes(1);
   });
 
   it("should filter spans ", async () => {
@@ -172,9 +178,11 @@ describe("export", () => {
     await expect(callExport([SPAN_RANDOM])).resolves.toStrictEqual(
       SUCCESS_EXPORT,
     );
-    const { postData, hookData } = getter();
-    expect(postData).toStrictEqual([]);
-    expect(hookData).toStrictEqual([]);
+    const { postData, hookData, postCalled, hookCalled } = getter();
+    expect(postCalled).toBeFalsy();
+    expect(postData).toStrictEqual(undefined);
+    expect(hookCalled).toBeFalsy();
+    expect(hookData).toStrictEqual(undefined);
   });
 
   it("should send spans and call hook", async () => {

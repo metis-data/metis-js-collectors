@@ -130,3 +130,19 @@ export async function getPGPlan(
     // TODO: Decide what to do in this case.
   }
 }
+
+export class PlanFetcher {
+  constructor(
+    private dialect: Dialect,
+    private queryRunner: QueryRunner,
+    private planType: PlanType = PlanType.ESTIMATED,
+  ) {}
+
+  fetch(query: string): Promise<any> {
+    if (this.dialect === Dialect.PG) {
+      return getPGPlan(query, this.planType, this.queryRunner);
+    } else {
+      throw Error(`unkown dialect: ${this.dialect}`);
+    }
+  }
+}

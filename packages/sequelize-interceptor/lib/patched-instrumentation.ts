@@ -16,11 +16,14 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
   constructor(
     private queryRunner: QueryRunner,
     private planType: PlanType = PlanType.ESTIMATED,
+    private errorHandler: (error: any) => void,
     config: SequelizeInstrumentationConfig = {},
+    private getPlan: boolean = true,
   ) {
     super(config);
     this.queryRunner = queryRunner;
     this.planType = planType;
+    this.errorHandler = errorHandler;
   }
 
   private setWrapped(obj: any, wrapped: boolean): void {
@@ -33,47 +36,59 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
   }
 
   protected patch(moduleExports: typeof Sequelize, moduleVersion: string) {
-    const self = this;
+    try {
+      // If we do not need to get the plan there is no point patching.
+      if (!this.getPlan) {
+        return super.patch(moduleExports, moduleVersion);
+      }
 
-    // Our own patch that grabs the plan and add it to the current span.
-    // The span should be the query span and not the request span.
-    shimmer.wrap(
-      moduleExports.Sequelize.prototype,
-      "query",
-      function (original: () => Promise<any>) {
-        return async function (sql: any, _: any) {
-          try {
-            // Getting the span, this should be the query span.
-            const span = trace.getSpan(context.active());
-            const query = sql?.query ? sql.query : sql;
-            const plan = await getPGPlan(
-              query,
-              self.planType,
-              self.queryRunner,
-            );
+      const self = this;
 
-            addPlanToSpan(span, plan);
-          } catch (e: any) {
-            // TODO: error handler?
-            console.error(e);
-          }
+      // Our own patch that grabs the plan and add it to the current span.
+      // The span should be the query span and not the request span.
+      shimmer.wrap(
+        moduleExports.Sequelize.prototype,
+        "query",
+        function (original: () => Promise<any>) {
+          return async function (sql: any, _: any) {
+            try {
+              // Getting the span, this should be the query span.
+              const span = trace.getSpan(context.active());
+              const query = sql?.query ? sql.query : sql;
+              const plan = await getPGPlan(
+                query,
+                self.planType,
+                self.queryRunner,
+              );
 
-          // Executing the actual function.
-          return await original.apply(this, arguments);
-        };
-      },
-    );
+              addPlanToSpan(span, plan);
+            } catch (e: any) {
+              self.errorHandler(e);
+            }
 
-    // Flagging the wrapped function as unwrapped so the "super.patch" function
-    // will not remove it. It would be restored later.
-    this.setWrapped(moduleExports.Sequelize.prototype.query, false);
+            // Executing the actual function.
+            return await original.apply(this, arguments);
+          };
+        },
+      );
 
-    const result = super.patch(moduleExports, moduleVersion);
+      // Flagging the wrapped function as unwrapped so the "super.patch" function
+      // will not remove it. It would be restored later.
+      this.setWrapped(moduleExports.Sequelize.prototype.query, false);
 
-    // Restoring the value.
-    // @ts-expect-error;
-    this.setWrapped(moduleExports.Sequelize.prototype.query.__original, true);
+      const result = super.patch(moduleExports, moduleVersion);
 
-    return result;
+      // Restoring the value.
+      this.setWrapped(
+        // @ts-expect-error;
+        moduleExports.Sequelize.prototype.query.__original,
+        true,
+      );
+
+      return result;
+    } catch (error: any) {
+      this.errorHandler(error);
+      return super.patch(moduleExports, moduleVersion);
+    }
   }
 }

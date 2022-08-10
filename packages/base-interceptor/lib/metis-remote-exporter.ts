@@ -6,7 +6,7 @@ import {
 } from "@opentelemetry/core";
 import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
-import { DB_STATEMENT_METIS, TRACK_BY } from "./constants";
+import { DB_STATEMENT, DB_STATEMENT_METIS, TRACK_BY } from "./constants";
 import snakecaseKeys = require("snakecase-keys");
 import { MetisRemoteExporterOptions } from "./types";
 import { post } from "./request";
@@ -77,10 +77,8 @@ class MetisRemoteExporter implements SpanExporter {
    */
   private exportInfo(span: ReadableSpan) {
     const newSpan = {
-      trace_id: span.spanContext().traceId,
       parent_id: span.parentSpanId,
       name: span.name,
-      id: span.spanContext().spanId,
       kind: MetisRemoteExporter.transformKind(span.kind),
       timestamp: hrTimeToMicroseconds(span.startTime),
       duration: hrTimeToMicroseconds(span.duration),
@@ -97,6 +95,37 @@ class MetisRemoteExporter implements SpanExporter {
     };
 
     return newSpan;
+  }
+
+  private static isPrismaQuerySpan(span: ReadableSpan) {
+    return (
+      span.instrumentationLibrary.name === "prisma" &&
+      DB_STATEMENT in span.attributes
+    );
+  }
+
+  private async prepareSpans(spans: ReadableSpan[]) {
+    const data = spans
+      .filter(
+        (span: ReadableSpan) =>
+          TRACK_BY in span.attributes || DB_STATEMENT_METIS in span.attributes, // ||
+        // MetisRemoteExporter.isPrismaQuerySpan(span),
+      )
+      // .map((span: ReadableSpan) => {
+      //   if (this.exporterOptions.planFetcher) {
+      //     if (MetisRemoteExporter.isPrismaQuerySpan(span)) {
+      //       const query = getQueryFromSpan(span);
+      //       const plan = this.exporterOptions.planFetcher.fetch(query);
+      //       addPlanToSpan(span, plan);
+      //     }
+      //   }
+      //   return span;
+      // })
+      .map((span: ReadableSpan) =>
+        JSON.stringify(this.exportInfo(span), null, 0),
+      );
+
+    return data;
   }
 
   private async sendSpan(data: any) {
@@ -133,34 +162,35 @@ class MetisRemoteExporter implements SpanExporter {
         return;
       }
 
-      const data = spans
-        .filter(
-          (span: ReadableSpan) =>
-            TRACK_BY in span.attributes ||
-            DB_STATEMENT_METIS in span.attributes,
-        )
-        .map((span: ReadableSpan) =>
-          JSON.stringify(this.exportInfo(span), null, 0),
-        );
-
-      try {
-        this.exporterOptions?.postHook(data);
-      } catch (ignore: any) {
-        // Ignore errors in hooks.
-      }
-
-      const promise = this.sendSpan(data).then((result) =>
-        resultCallback(result),
-      );
+      const promise = this.prepareSpans(spans).then(async (data) => {
+        if (data.length > 0) {
+          try {
+            this.exporterOptions?.postHook(data);
+          } catch (ignore: any) {
+            // Ignore errors in hooks. Those are not ours.
+          }
+          const result = await this.sendSpan(data);
+          resultCallback(result);
+        } else {
+          // TODO: should we report success when we don’t send anything?
+          // Doesn’t seem right, but error seems wrong as well.
+          resultCallback({ code: ExportResultCode.SUCCESS });
+        }
+      });
 
       this._sendingPromises.push(promise);
       const popPromise = () => {
         const index = this._sendingPromises.indexOf(promise);
         this._sendingPromises.splice(index, 1);
       };
-      promise.then(popPromise, popPromise);
+      promise.then(popPromise, (e: any) => {
+        console.log(e);
+        this.exporterOptions.errorHandler(e);
+        popPromise();
+        resultCallback(MetisRemoteExporter.error(e));
+      });
     } catch (e: any) {
-      console.error(e);
+      this.exporterOptions.errorHandler(e);
       resultCallback(MetisRemoteExporter.error(e));
     }
   }

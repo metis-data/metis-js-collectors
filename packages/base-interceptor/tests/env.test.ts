@@ -1,11 +1,6 @@
-import * as process from "process";
 import { describe, expect, it } from "@jest/globals";
 import * as EnvTags from "../lib/env";
-
-const addKey = (key: string, value: string) => (process.env[key] = value);
-
-const addMetisKey = (key: string, value: string) =>
-  addKey(`${EnvTags.METIS_TAG_PREFIX}_${key}`, value);
+import { addKey, addMetisKey } from "./common";
 
 describe("extractAdditionalTagsFromEnvVar", () => {
   it("should return empty when has no env var", () => {
