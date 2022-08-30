@@ -1,6 +1,9 @@
 import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import { METIS_SDK_VERSION } from "./constants";
 import { extractAdditionalTagsFromEnvVar } from "./env";
+// @ts-ignore
+import * as pkg from "../package.json";
 
 function convertMetisAttr(attr: { [key: string]: string }) {
   return Object.keys(attr).reduce(
@@ -21,6 +24,7 @@ function make(
   return new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
     [SemanticResourceAttributes.SERVICE_VERSION]: serviceVersion,
+    [METIS_SDK_VERSION]: pkg.version,
     ...convertMetisAttr(metisAttributes),
     ...rest,
   });

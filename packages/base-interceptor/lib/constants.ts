@@ -1,6 +1,7 @@
 import { SemanticAttributes } from "@opentelemetry/semantic-conventions";
 
-// Keys
+// Key
+export const METIS_SDK_VERSION = "metis.sdk.version";
 export const TRACK_BY = "track.by.metis";
 export const DB_STATEMENT = SemanticAttributes.DB_STATEMENT;
 export const DB_STATEMENT_METIS = `${DB_STATEMENT}.metis`;
