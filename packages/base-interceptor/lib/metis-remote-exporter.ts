@@ -9,9 +9,19 @@ import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { DB_STATEMENT, DB_STATEMENT_METIS, TRACK_BY } from "./constants";
 import snakecaseKeys = require("snakecase-keys");
 import { MetisRemoteExporterOptions } from "./types";
-import { post } from "./request";
+import { postWithRetries } from "./request";
 
 class MetisRemoteExporter implements SpanExporter {
+  // Error Context
+  public static readonly AWS_CONTEXT = "AWS Context";
+  public static readonly X_RAY = "X Ray Trace Id";
+  public static readonly REQUEST_ID = "Request Id";
+  public static readonly RESPONSE = "Response";
+
+  // Headers
+  public static readonly X_RAY_HEADER = "x-amzn-trace-id";
+  public static readonly REQUEST_ID_HEADER = "x-amzn-requestid";
+
   private _sendingPromises: Promise<unknown>[] = [];
   private _isShutdown: boolean;
 
@@ -25,7 +35,7 @@ class MetisRemoteExporter implements SpanExporter {
     this.exporterOptions = exporterOptions;
   }
 
-  private static error(e: any) {
+  private static error(e?: any) {
     return {
       code: ExportResultCode.FAILED,
       error: e,
@@ -104,7 +114,7 @@ class MetisRemoteExporter implements SpanExporter {
     );
   }
 
-  private async prepareSpans(spans: ReadableSpan[]) {
+  private async prepareSpans(spans: ReadableSpan[]): Promise<string[]> {
     const data = spans
       .filter(
         (span: ReadableSpan) =>
@@ -128,23 +138,75 @@ class MetisRemoteExporter implements SpanExporter {
     return data;
   }
 
-  private async sendSpan(data: any) {
-    try {
-      if (this.exporterOptions?.postFn) {
-        await this.exporterOptions.postFn(data);
-      } else {
-        const dataString = JSON.stringify(data);
-        const options = {
-          method: "POST",
-          headers: this.getHeaders(dataString),
-        };
-        await post(this.exporterUrl, dataString, options);
-      }
+  private static shouldReport(status: number): boolean {
+    return status >= 400;
+  }
 
-      return { code: ExportResultCode.SUCCESS };
-    } catch (e) {
-      return MetisRemoteExporter.error(e);
+  private static *chuncker(data: string[], limit: number = 200000) {
+    if (!data) {
+      return [];
     }
+
+    let result = [];
+    let counter = 0;
+    for (const item of data) {
+      counter += item.length;
+      result.push(item);
+      if (counter >= limit) {
+        yield result;
+        counter = 0;
+        result = []; // start a new chunk
+      }
+    }
+
+    yield result;
+  }
+
+  private async sendSpan(data: string[]) {
+    for (let send of MetisRemoteExporter.chuncker(data)) {
+      const dataString = JSON.stringify(send);
+      try {
+        if (this.exporterOptions?.postFn) {
+          await this.exporterOptions.postFn(data);
+        } else {
+          const options = {
+            method: "POST",
+            headers: this.getHeaders(dataString),
+          };
+
+          const response = await postWithRetries(
+            this.exporterUrl,
+            dataString,
+            options,
+            3,
+          );
+
+          if (MetisRemoteExporter.shouldReport(response.statusCode)) {
+            const error = new Error(
+              `Unable to send spans, status code: ${response.statusCode}`,
+            );
+            const contexts = {
+              [MetisRemoteExporter.AWS_CONTEXT]: {
+                [MetisRemoteExporter.X_RAY]: response.headers[
+                  MetisRemoteExporter.X_RAY_HEADER
+                ] as string,
+                [MetisRemoteExporter.REQUEST_ID]: response.headers[
+                  MetisRemoteExporter.REQUEST_ID_HEADER
+                ] as string,
+                [MetisRemoteExporter.RESPONSE]: response.text,
+              },
+            };
+            this.exporterOptions.errorHandler?.(error, contexts);
+            return MetisRemoteExporter.error(error);
+          }
+        }
+      } catch (e) {
+        // So we stop sending on the first error?
+        return MetisRemoteExporter.error(e);
+      }
+    }
+
+    return { code: ExportResultCode.SUCCESS };
   }
 
   export(
@@ -184,13 +246,12 @@ class MetisRemoteExporter implements SpanExporter {
         this._sendingPromises.splice(index, 1);
       };
       promise.then(popPromise, (e: any) => {
-        console.log(e);
-        this.exporterOptions.errorHandler(e);
+        this.exporterOptions.errorHandler?.(e);
         popPromise();
         resultCallback(MetisRemoteExporter.error(e));
       });
     } catch (e: any) {
-      this.exporterOptions.errorHandler(e);
+      this.exporterOptions.errorHandler?.(e);
       resultCallback(MetisRemoteExporter.error(e));
     }
   }

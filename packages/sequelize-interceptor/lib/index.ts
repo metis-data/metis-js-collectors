@@ -8,7 +8,7 @@ export function getSequelizeInstrumentation(
   sequelize: Sequelize,
   planType: PlanType,
   errorHandler: (error: any) => void,
-  getPlan: boolean = true,
+  shouldCollectPlans: boolean = true,
 ) {
   // Sequelize must be imported after setting up the interceptor
   // but we need it inside of it so we are in a catch 22.
@@ -29,7 +29,7 @@ export function getSequelizeInstrumentation(
     {
       queryHook: async (span: Span) => attachTraceIdToQuery(span),
     },
-    getPlan,
+    shouldCollectPlans,
   );
 }
 

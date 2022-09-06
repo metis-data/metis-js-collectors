@@ -6,4 +6,5 @@ module.exports = {
   testEnvironment: "node",
   testMatch: ["**/*.test.ts"],
   rootDir: "./",
+  clearMocks: true,
 };

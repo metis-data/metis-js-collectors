@@ -11,9 +11,11 @@ import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import { Resource } from "@opentelemetry/resources";
 import { ReadableSpan, TimedEvent } from "@opentelemetry/sdk-trace-base";
 import MetisRemoteExporter from "../lib/metis-remote-exporter";
-import { MetisRemoteExporterOptions } from "../lib/types";
+import { ErrorHanlder, MetisRemoteExporterOptions } from "../lib/types";
 import { TRACK_BY, DB_STATEMENT_METIS } from "../lib/constants";
 import { QUERY } from "./common";
+jest.mock("https");
+import * as https from "https";
 
 const URL = "https://www.example.com";
 const API_KEY = "an api key";
@@ -101,7 +103,7 @@ describe("export", () => {
 
   const setupAndGetData = () => {
     let hookData: string[];
-    let postData: string[];
+    let postData: Array<string[]>;
     let hookCalled = false;
     let postCalled = false;
     exporter = setup({
@@ -110,7 +112,10 @@ describe("export", () => {
         hookCalled = true;
       },
       postFn: (d: string[]) => {
-        postData = d;
+        if (!postCalled) {
+          postData = [];
+        }
+        postData.push(d);
         postCalled = true;
         return Promise.resolve();
       },
@@ -153,6 +158,43 @@ describe("export", () => {
     );
   });
 
+  it("should retry three times sending spans when getting 500", async () => {
+    let contexts;
+    const errorHandler: ErrorHanlder = (_, _contexts?) => {
+      contexts = _contexts;
+    };
+    exporter = setup({ errorHandler });
+
+    const result = await callExport(VALID_SPANS);
+
+    expect(https.request).toBeCalledTimes(4);
+    expect(result).toStrictEqual({
+      code: ExportResultCode.FAILED,
+      error: new Error("Unable to send spans, status code: 500"),
+    });
+    expect(contexts).toStrictEqual({
+      [MetisRemoteExporter.AWS_CONTEXT]: {
+        [MetisRemoteExporter.X_RAY]: "x-ray",
+        [MetisRemoteExporter.REQUEST_ID]: "request-id",
+        [MetisRemoteExporter.RESPONSE]: "{}",
+      },
+    });
+  });
+
+  it("should return success if sent on retry", async () => {
+    exporter = setup({});
+    // @ts-ignore
+    https.setCountToSuccess(2);
+    const result = await callExport(VALID_SPANS);
+
+    expect(https.request).toBeCalledTimes(3);
+    expect(result).toStrictEqual({
+      code: ExportResultCode.SUCCESS,
+    });
+    // @ts-ignore
+    https.resetCountToSuccess();
+  });
+
   it("should handle failure in sending spans", async () => {
     exporter = setup({
       postFn: REJECT_POST_FN,
@@ -190,6 +232,18 @@ describe("export", () => {
     await expect(callExport(VALID_SPANS)).resolves.toStrictEqual(
       SUCCESS_EXPORT,
     );
+    const { postData, hookData } = getter();
+    expect(postData).toMatchSnapshot();
+    expect(hookData).toMatchSnapshot();
+  });
+
+  it("should split data when too big", async () => {
+    const getter = setupAndGetData();
+    const spans = [];
+    for (let i = 0; i < 200; i++) {
+      spans.push(...VALID_SPANS);
+    }
+    await expect(callExport(spans)).resolves.toStrictEqual(SUCCESS_EXPORT);
     const { postData, hookData } = getter();
     expect(postData).toMatchSnapshot();
     expect(hookData).toMatchSnapshot();

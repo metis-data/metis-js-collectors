@@ -6,13 +6,18 @@ import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { getResource } from "./resource";
 import MetisRemoteExporter from "./metis-remote-exporter";
 import * as errorHandler from "./error-hanlder";
-import { InstrumentationOptions, InstrumentationResult } from "./types";
+import {
+  Contexts,
+  ErrorHanlder,
+  InstrumentationOptions,
+  InstrumentationResult,
+} from "./types";
 import { PlanFetcher } from "./plan";
 
 function getMetisExporter(
   exporterUrl: string,
   exporterApiKey: string,
-  errorHandler: (error: any) => void,
+  errorHandler: ErrorHanlder,
   planFetcher: PlanFetcher,
   print: boolean = false,
 ) {
@@ -48,11 +53,11 @@ export default function instrument(
   instrumentations: Instrumentation[],
   options: InstrumentationOptions = { printToConsole: false },
 ): InstrumentationResult | undefined {
-  const combinedErrorHandler = (error: any) => {
+  const combinedErrorHandler = (error: any, contexts?: Contexts) => {
     // TODO: should I try catch here? what do I do with the error?
-    errorHandler.handle(error);
+    errorHandler.handle(error, contexts);
     if (options.errorHandler) {
-      options.errorHandler(error);
+      options.errorHandler(error, contexts);
     }
   };
 

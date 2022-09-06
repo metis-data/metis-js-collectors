@@ -16,3 +16,4 @@ export {
   InstrumentationOptions,
 } from "./types";
 export { Dialect } from "./constants";
+export { Configuration, ConfigurationHandler } from "./configuration";

@@ -18,7 +18,7 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
     private planType: PlanType = PlanType.ESTIMATED,
     private errorHandler: (error: any) => void,
     config: SequelizeInstrumentationConfig = {},
-    private getPlan: boolean = true,
+    private shouldCollectPlans: boolean = true,
   ) {
     super(config);
     this.queryRunner = queryRunner;
@@ -38,7 +38,7 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
   protected patch(moduleExports: typeof Sequelize, moduleVersion: string) {
     try {
       // If we do not need to get the plan there is no point patching.
-      if (!this.getPlan) {
+      if (!this.shouldCollectPlans) {
         return super.patch(moduleExports, moduleVersion);
       }
 
