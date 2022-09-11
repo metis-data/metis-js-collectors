@@ -1,7 +1,7 @@
 {
   "name": "prisma-nest-example",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.6",
   "description": "Nest TypeScript starter repository",
   "license": "MIT",
   "scripts": {
@@ -16,21 +16,21 @@
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w"
   },
   "dependencies": {
-    "@metis-data/base-interceptor": "^0.0.1",
+    "@metis-data/base-interceptor": "^0.0.6",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@opentelemetry/instrumentation-http": "^0.31.0",
     "@opentelemetry/instrumentation-nestjs-core": "^0.30.0",
+    "@prisma/client": "^4.1.1",
+    "@prisma/instrumentation": "^4.1.1",
     "config": "^3.3.6",
+    "db-client": "^0.0.6",
     "dotenv": "^10.0.0",
+    "prisma-client": "^0.0.6",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.5.5",
-    "db-client": "^0.0.1",
-    "prisma-client": "^0.0.1",
-    "@prisma/client": "^4.1.1",
-    "@prisma/instrumentation": "^4.1.1"
+    "rxjs": "^7.5.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

@@ -1,4 +1,4 @@
-name: Create and publish CLI
+name: PR Build
 
 on:
   push:

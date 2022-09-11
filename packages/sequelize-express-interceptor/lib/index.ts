@@ -15,7 +15,6 @@ import {
 } from "@metis-data/base-interceptor";
 import { getSequelizeInstrumentation } from "@metis-data/sequelize-interceptor";
 import { IncomingMessage } from "http";
-import { Sequelize } from "sequelize-typescript";
 import { Tracer } from "@opentelemetry/api";
 
 export type SequelizeExpressInstrumentationOptions = InstrumentationOptions & {
@@ -35,7 +34,7 @@ function instrument(
   exporterApiKey: string,
   serviceName: string,
   serviceVersion: string,
-  sequelize: Sequelize,
+  sequelize: any,
   options: SequelizeExpressInstrumentationOptions = DEFAULT_OPTIONS,
 ): InstrumentationResult {
   const sequelizeInstrumentation = getSequelizeInstrumentation(
@@ -95,7 +94,7 @@ export default class SequelizeExpressInterceptor {
   }
 
   instrument(
-    sequelize: Sequelize,
+    sequelize: any,
     options: SequelizeExpressInstrumentationOptions = DEFAULT_OPTIONS,
   ) {
     const result = instrument(

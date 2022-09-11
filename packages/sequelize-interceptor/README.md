@@ -1,11 +1,20 @@
 # `@metis-data/sequelize-interceptor`
 
-> TODO: description
+Intercept sequelize queries using OpenTelemetry and enrich spans.
 
 ## Usage
 
-```
-const sequelizeInterceptor = require('@metis-data/sequelize-interceptor');
+```javascript
+import {
+  PlanType,
+} from "@metis-data/base-interceptor";
+import { getSequelizeInstrumentation } from "@metis-data/sequelize-interceptor";
 
-// TODO: DEMONSTRATE API
+// Create the instrumentation object to use with Open Telemetry.
+const sequelizeInstrumentation = getSequelizeInstrumentation(
+    sequelize, // The sequelize instance.
+    PlanType.ESTIMATED, // the type of plan to get, default to Estimated.
+    console.error, // error handler, exception are still sent to metis' Sentry account.
+    true, // Collect plans and add them to spans. default to true.
+);
 ```

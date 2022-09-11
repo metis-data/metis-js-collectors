@@ -1,7 +1,7 @@
 {
   "name": "@metis-data/base-interceptor",
-  "version": "0.0.1",
-  "description": "> TODO: description",
+  "version": "0.0.6",
+  "description": "Utils for metis packages for query interception",
   "author": "itzikmetis <itzikb@metisdata.io>",
   "homepage": "",
   "license": "ISC",
@@ -15,7 +15,7 @@
     "dist"
   ],
   "publishConfig": {
-    "@metis-data:registry": "https://npm.pkg.github.com"
+    "@metis-data:registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "./node_modules/.bin/tsc --project ./tsconfig.json",
@@ -33,15 +33,15 @@
     "typescript": "^4.7.4"
   },
   "peerDependencies": {
+    "@opentelemetry/instrumentation": "^0.31.0",
     "@opentelemetry/resources": "^1.4.0",
     "@opentelemetry/sdk-trace-node": "^1.4.0",
-    "@opentelemetry/instrumentation": "^0.31.0",
     "@opentelemetry/semantic-conventions": "^1.4.0"
   },
   "dependencies": {
-    "snakecase-keys": "^5.4.2",
-    "sql-query-identifier": "^2.3.0",
     "@sentry/node": "^7.7.0",
-    "source-map-support": "^0.5.21"
+    "snakecase-keys": "^5.4.2",
+    "source-map-support": "^0.5.21",
+    "sql-query-identifier": "^2.3.0"
   }
 }

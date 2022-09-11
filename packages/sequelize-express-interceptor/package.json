@@ -1,7 +1,7 @@
 {
   "name": "@metis-data/sequelize-express-interceptor",
-  "version": "0.0.1",
-  "description": "> TODO: description",
+  "version": "0.0.6",
+  "description": "Intercept sequelize queries and express requests using OpenTelemetry, enrich spans and send them to metis platform",
   "author": "itzikmetis <itzikb@metisdata.io>",
   "homepage": "",
   "license": "ISC",
@@ -15,7 +15,7 @@
     "dist"
   ],
   "publishConfig": {
-    "@metis-data:registry": "https://npm.pkg.github.com"
+    "@metis-data:registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "./node_modules/.bin/tsc --project ./tsconfig.json",
@@ -27,25 +27,25 @@
   },
   "devDependencies": {
     "@types/jest": "^28.1.4",
+    "@types/sequelize": "^4.28.14",
     "ts-jest": "^28.0.5",
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@metis-data/base-interceptor": "^0.0.1",
-    "@metis-data/sequelize-interceptor": "^0.0.1",
-    "@opentelemetry/instrumentation": "^0.30.0",
+    "@metis-data/base-interceptor": "^0.0.6",
+    "@metis-data/sequelize-interceptor": "^0.0.6",
+    "@opentelemetry/api": "^1.1.0",
+    "@opentelemetry/instrumentation": "^0.31.0",
+    "@opentelemetry/instrumentation-express": "^0.30.0",
+    "@opentelemetry/instrumentation-http": "^0.30.0",
     "@opentelemetry/resources": "^1.4.0",
     "@opentelemetry/sdk-trace-node": "^1.4.0",
     "@opentelemetry/semantic-conventions": "^1.4.0",
-    "@opentelemetry/instrumentation-express": "^0.30.0",
-    "@opentelemetry/instrumentation-http": "^0.30.0",
-    "opentelemetry-instrumentation-sequelize": "^0.29.0",
-    "sequelize": "^6.21.2",
-    "sequelize-typescript": "^2.1.3",
-    "@opentelemetry/api": "^1.1.0",
-    "shimmer": "^1.2.1"
+    "opentelemetry-instrumentation-sequelize": "^0.29.0"
   },
   "peerDependecies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "sequelize": "^6.21.2",
+    "sequelize-typescript": "^2.1.3"
   }
 }

@@ -1,4 +1,4 @@
-name: Create and publish CLI
+name: Release
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16.5
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: 'https://registry.npmjs.org/'
           scope: '@metis-data'
       - name: Install dependencies
         run: |
@@ -38,8 +38,14 @@ jobs:
         run: |
           lerna run test
       - name: 'Set version to: ${{ inputs.version }}'
-        run: lerna --scope=@metis-data/base-interceptor --scope=@metis-data/sequelize-interceptor exec npm version ${{ inputs.version }}
-      - name: Publish
-        run: lerna --scope=@metis-data/base-interceptor --scope=@metis-data/sequelize-interceptor exec npm publish
+        run: |
+          # Needed so we would be able to push a new tagged commit for the new version.
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor}}@users.noreply.github.com"
+
+          lerna version ${{ inputs.version }} --yes
+      - name: Publish to NPM
+        run: lerna --scope=@metis-data/base-interceptor --scope=@metis-data/sequelize-interceptor --scope=@metis-data/sequelize-express-interceptor exec npm publish -- --access=public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
