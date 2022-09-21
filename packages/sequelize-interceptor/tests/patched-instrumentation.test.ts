@@ -15,7 +15,7 @@ jest.mock("@metis-data/base-interceptor", () => ({
 
 const QUERY = "SELECT * FROM Table";
 
-describe("extractAdditionalTagsFromEnvVar", () => {
+describe("patch", () => {
   let queryRunner: any;
   let sequelize: any;
   let errorHandler: (error: any) => void;

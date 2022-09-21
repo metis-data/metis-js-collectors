@@ -4,7 +4,7 @@ import {
   hrTimeToMicroseconds,
   hrTimeToTimeStamp,
 } from "@opentelemetry/core";
-import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { SpanKind, SpanStatusCode, HrTime } from "@opentelemetry/api";
 import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { DB_STATEMENT, DB_STATEMENT_METIS, TRACK_BY } from "./constants";
 import snakecaseKeys = require("snakecase-keys");
@@ -82,6 +82,14 @@ class MetisRemoteExporter implements SpanExporter {
   }
 
   /**
+   * Sometimes, and for some unknown reasons, the values in HrTime
+   * are float and not a number. This cause an additional "." to be added when we try to
+   * convert those values to ISO string: "2022-09-19T12:38:33..00000006Z".
+   */
+  private static fixHrTime(time: HrTime): HrTime {
+    return [Math.floor(time[0]), Math.floor(time[1])];
+  }
+  /**
    * converts span to remove the circular dependency that prevents serialization using JSON.
    * @param span
    */
@@ -99,8 +107,10 @@ class MetisRemoteExporter implements SpanExporter {
       events: span.events,
       links: span.links,
       context: snakecaseKeys(span.spanContext()),
-      start_time: hrTimeToTimeStamp(span.startTime),
-      end_time: hrTimeToTimeStamp(span.endTime),
+      start_time: hrTimeToTimeStamp(
+        MetisRemoteExporter.fixHrTime(span.startTime),
+      ),
+      end_time: hrTimeToTimeStamp(MetisRemoteExporter.fixHrTime(span.endTime)),
       resource: span.resource.attributes,
     };
 

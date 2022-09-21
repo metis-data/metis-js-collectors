@@ -5,7 +5,7 @@ Intercept sequelize queries and express requests using OpenTelemetry, enrich spa
 ## Usage
 
 ```javascript
-import SequelizeExpressInterceptor from "@metis-data/sequelize-express-interceptor";
+const { deafult: SequelizeExpressInterceptor } = require("@metis-data/sequelize-express-interceptor");
 
 
 const interceptor = SequelizeExpressInterceptor.create({
@@ -23,3 +23,9 @@ interceptor.instrument(
   },
 );
 ```
+
+## Configure
+
+It is possible to configure the service name and version, and the exporter URL and API key, in code (by passing an object in `create`) or in environment variables.
+
+When starting the interceptor it will merge the configuration from `create` and environment. The configuration from `create` will override values in environment.

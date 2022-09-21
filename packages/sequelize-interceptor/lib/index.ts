@@ -16,7 +16,7 @@ export function getSequelizeInstrumentation(
   Object.keys(require.cache)
     .filter(
       (key: string) =>
-        key.includes("sequelize-typescript") || key.includes("sequelize"),
+        key.includes("/sequelize-typescript/") || key.includes("/sequelize/"),
     )
     .forEach((moduleName) => {
       delete require.cache[moduleName];
