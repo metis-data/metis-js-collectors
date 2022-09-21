@@ -1,6 +1,6 @@
 {
   "name": "sequelize-express-example",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "> TODO: description",
   "author": "ItzikBraun <itzik.braun@gmail.com>",
   "homepage": "https://github.com/metis-data/dba.ai#readme",
@@ -31,8 +31,8 @@
     "url": "https://github.com/metis-data/dba.ai/issues"
   },
   "dependencies": {
-    "@metis-data/base-interceptor": "^0.0.6",
-    "@metis-data/sequelize-express-interceptor": "^0.0.6",
+    "@metis-data/base-interceptor": "^0.0.7",
+    "@metis-data/sequelize-express-interceptor": "^0.0.7",
     "@opentelemetry/instrumentation": "^0.31.0",
     "@opentelemetry/instrumentation-express": "^0.30.0",
     "@opentelemetry/instrumentation-http": "^0.30.0",
@@ -46,7 +46,7 @@
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.1.13",
     "sequelize": "^6.21.2",
-    "sequelize-client": "^0.0.6",
+    "sequelize-client": "^0.0.7",
     "sequelize-typescript": "^2.1.3",
     "source-map-support": "^0.5.21"
   },

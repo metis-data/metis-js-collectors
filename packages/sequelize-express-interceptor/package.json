@@ -1,6 +1,6 @@
 {
   "name": "@metis-data/sequelize-express-interceptor",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Intercept sequelize queries and express requests using OpenTelemetry, enrich spans and send them to metis platform",
   "author": "itzikmetis <itzikb@metisdata.io>",
   "homepage": "",
@@ -32,8 +32,8 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@metis-data/base-interceptor": "^0.0.6",
-    "@metis-data/sequelize-interceptor": "^0.0.6",
+    "@metis-data/base-interceptor": "^0.0.7",
+    "@metis-data/sequelize-interceptor": "^0.0.7",
     "@opentelemetry/api": "^1.1.0",
     "@opentelemetry/instrumentation": "^0.31.0",
     "@opentelemetry/instrumentation-express": "^0.30.0",
