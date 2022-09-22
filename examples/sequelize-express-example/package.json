@@ -7,16 +7,19 @@
   "license": "ISC",
   "main": "dist/index.js",
   "types": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:metis-data/metis-js-collectors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/metis-data/metis-js-collectors/issues"
+  },
   "directories": {
     "lib": "dist"
   },
   "files": [
     "dist"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/metis-data/dba.ai.git"
-  },
   "scripts": {
     "build": "./node_modules/.bin/tsc --project ./tsconfig.json",
     "nodemon": "nodemon --config nodemon.json src/index.ts",
@@ -26,9 +29,6 @@
     "lint": "eslint --fix ./**/*.ts",
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w",
     "start": "node dist/index.js"
-  },
-  "bugs": {
-    "url": "https://github.com/metis-data/dba.ai/issues"
   },
   "dependencies": {
     "@metis-data/base-interceptor": "^0.0.7",

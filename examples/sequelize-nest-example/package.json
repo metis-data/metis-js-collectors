@@ -4,6 +4,13 @@
   "version": "0.0.7",
   "description": "Nest TypeScript starter repository",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:metis-data/metis-js-collectors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/metis-data/metis-js-collectors/issues"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",

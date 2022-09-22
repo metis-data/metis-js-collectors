@@ -15,6 +15,13 @@
     "lint": "eslint \"{lib,apps,libs,test}/**/*.ts\" --fix",
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:metis-data/metis-js-collectors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/metis-data/metis-js-collectors/issues"
+  },
   "dependencies": {
     "@metis-data/base-interceptor": "^0.0.7",
     "@nestjs/common": "^9.0.0",

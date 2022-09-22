@@ -25,7 +25,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:metis-data/js-interceptors.git"
+    "url": "git@github.com:metis-data/metis-js-collectors.git"
+  },
+  "bugs": {
+    "url": "https://github.com/metis-data/metis-js-collectors/issues"
   },
   "devDependencies": {
     "@types/jest": "^28.1.4",
