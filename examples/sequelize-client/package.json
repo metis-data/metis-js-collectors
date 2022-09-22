@@ -1,6 +1,6 @@
 {
   "name": "sequelize-client",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "> TODO: description",
   "author": "itzikmetis <itzikb@metisdata.io>",
   "homepage": "",
@@ -30,13 +30,6 @@
     "test-watch": "jest --passWithNoTests --silent --verbose false --detectOpenHandles --maxWorkers 1 --watch",
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:metis-data/metis-js-collectors.git"
-  },
-  "bugs": {
-    "url": "https://github.com/metis-data/metis-js-collectors/issues"
-  },
   "devDependencies": {
     "@types/jest": "^28.1.4",
     "@types/sequelize": "^4.28.14",
@@ -44,7 +37,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "db-client": "^0.0.7",
+    "db-client": "^0.0.8",
     "pg": "^8.7.3",
     "pg-hstore": "^2.3.4"
   },

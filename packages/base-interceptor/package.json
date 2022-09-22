@@ -1,6 +1,6 @@
 {
   "name": "@metis-data/base-interceptor",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Utils for metis packages for query interception",
   "author": "itzikmetis <itzikb@metisdata.io>",
   "homepage": "",
