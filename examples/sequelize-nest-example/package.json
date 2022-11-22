@@ -1,7 +1,7 @@
 {
   "name": "sequelize-nest-example",
   "private": true,
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Nest TypeScript starter repository",
   "license": "MIT",
   "repository": {
@@ -23,8 +23,8 @@
     "watch": "./node_modules/.bin/tsc --project ./tsconfig.json -w"
   },
   "dependencies": {
-    "@metis-data/base-interceptor": "^0.0.8",
-    "@metis-data/sequelize-interceptor": "^0.0.8",
+    "@metis-data/base-interceptor": "^0.0.9",
+    "@metis-data/sequelize-interceptor": "^0.0.9",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
@@ -36,7 +36,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.5.5",
     "sequelize": "^6.21.2",
-    "sequelize-client": "^0.0.8",
+    "sequelize-client": "^0.0.9",
     "sequelize-typescript": "^2.1.3"
   },
   "devDependencies": {

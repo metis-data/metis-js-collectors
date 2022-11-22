@@ -1,6 +1,6 @@
 {
   "name": "prisma-client",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "> TODO: description",
   "author": "itzikmetis <itzikb@metisdata.io>",
   "homepage": "",
@@ -38,7 +38,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "db-client": "^0.0.8"
+    "db-client": "^0.0.9"
   },
   "peerDependencies": {
     "@prisma/client": "^4.1.1"
