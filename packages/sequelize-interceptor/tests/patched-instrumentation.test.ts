@@ -1,21 +1,21 @@
-import { describe, expect, it, beforeEach, jest } from "@jest/globals";
-import PatchedSequelizeInstrumentation from "../lib/patched-instrumentation";
+import { describe, expect, it, beforeEach, jest } from '@jest/globals';
+import PatchedSequelizeInstrumentation from '../lib/patched-instrumentation';
 
 import {
   addPlanToSpan,
   getPGPlan,
   PlanType,
-} from "@metis-data/base-interceptor";
-jest.mock("@metis-data/base-interceptor", () => ({
+} from '@metis-data/base-interceptor';
+jest.mock('@metis-data/base-interceptor', () => ({
   // @ts-expect-error
-  ...jest.requireActual("@metis-data/base-interceptor"),
+  ...jest.requireActual('@metis-data/base-interceptor'),
   addPlanToSpan: jest.fn(),
   getPGPlan: jest.fn(),
 }));
 
-const QUERY = "SELECT * FROM Table";
+const QUERY = 'SELECT * FROM Table';
 
-describe("patch", () => {
+describe('patch', () => {
   let queryRunner: any;
   let sequelize: any;
   let errorHandler: (error: any) => void;
@@ -45,9 +45,9 @@ describe("patch", () => {
     );
   });
 
-  it("should patch module", async () => {
+  it('should patch module', async () => {
     // @ts-expect-error
-    instrumentation.patch(sequelize, "0.0.1");
+    instrumentation.patch(sequelize, '0.0.1');
     await sequelize.Sequelize.prototype.query(QUERY, {});
     expect(getPGPlan).toBeCalledTimes(1);
     expect(addPlanToSpan).toBeCalledTimes(1);
@@ -57,13 +57,13 @@ describe("patch", () => {
     ).toBeCalledTimes(1);
   });
 
-  it("should catch exceptions", async () => {
-    const error = new Error("should be handled");
+  it('should catch exceptions', async () => {
+    const error = new Error('should be handled');
     // @ts-expect-error
     getPGPlan.mockImplementation(() => Promise.reject(error));
 
     // @ts-expect-error
-    instrumentation.patch(sequelize, "0.0.1");
+    instrumentation.patch(sequelize, '0.0.1');
     await expect(
       sequelize.Sequelize.prototype.query(QUERY, {}),
     ).resolves.toBeUndefined();
@@ -80,9 +80,9 @@ describe("patch", () => {
     expect(errorHandler).toBeCalledWith(error);
   });
 
-  it("should get query from object", async () => {
+  it('should get query from object', async () => {
     // @ts-expect-error
-    instrumentation.patch(sequelize, "0.0.1");
+    instrumentation.patch(sequelize, '0.0.1');
     await sequelize.Sequelize.prototype.query({ query: QUERY }, {});
     expect(getPGPlan).toBeCalledWith(QUERY, PlanType.ESTIMATED, queryRunner);
   });

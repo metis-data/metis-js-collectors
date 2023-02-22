@@ -1,19 +1,21 @@
-export { default as instrument } from "./instrumentation-setup";
-export { default as MetisRemoteExporter } from "./metis-remote-exporter";
-export { getPGPlan, QueryRunner, PlanType, PlanFetcher } from "./plan";
-export * as errorHandler from "./error-hanlder";
-export { createFilter } from "./urls-filter";
-export { getResource } from "./resource";
+import 'source-map-support/register';
+export { instrument } from './instrumentation-setup';
+export { getMetisExporter, MetisRemoteExporter } from './metis-remote-exporter';
+export { getPGPlan, QueryRunner, PlanType, PlanFetcher } from './plan';
+export * as errorHandler from './error-hanlder';
+export { createFilter } from './urls-filter';
+export { getResource } from './resource';
 export {
   markSpan,
   attachTraceIdToQuery,
   getQueryFromSpan,
   addPlanToSpan,
-} from "./span";
-export {
-  InstrumentationResult,
-  MetisRemoteExporterOptions,
-  InstrumentationOptions,
-} from "./types";
-export { Dialect } from "./constants";
-export { Configuration, ConfigurationHandler } from "./configuration";
+  addQueryToSpan,
+  attachFixedQuery,
+  addParamsToSpan,
+  addDbAttributes,
+} from './span';
+export { InstrumentationResult, MetisRemoteExporterOptions, InstrumentationOptions } from './types';
+export { getMarkedHttpInstrumentation } from './instrumentations';
+export { Dialect, METIS_QUERY_PREFIX, QUERY_FILTER, DbAttributes } from './constants';
+export { Configuration, ConfigurationHandler } from './configuration';

@@ -4,5 +4,9 @@
     "examples/*"
   ],
   "useNx": true,
+<<<<<<< HEAD
   "version": "0.0.9"
+=======
+  "version": "2.3.2"
+>>>>>>> ca29c32 (publish private to public 22.2.23)
 }

@@ -3,37 +3,35 @@ import {
   ExportResultCode,
   hrTimeToMicroseconds,
   hrTimeToTimeStamp,
-} from "@opentelemetry/core";
-import { SpanKind, SpanStatusCode, HrTime } from "@opentelemetry/api";
-import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
-import { DB_STATEMENT, DB_STATEMENT_METIS, TRACK_BY } from "./constants";
-import snakecaseKeys = require("snakecase-keys");
-import { MetisRemoteExporterOptions } from "./types";
-import { postWithRetries } from "./request";
+} from '@opentelemetry/core';
+import { SpanKind, SpanStatusCode, HrTime } from '@opentelemetry/api';
+import { SpanExporter, ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { DB_STATEMENT, DB_STATEMENT_METIS, TRACK_BY } from './constants';
+import snakecaseKeys = require('snakecase-keys');
+import { Contexts, ErrorHanlder, MetisRemoteExporterOptions } from './types';
+import { postWithRetries } from './request';
+import { ConfigurationHandler } from './configuration';
+import * as baseErrorHandler from './error-hanlder';
 
-class MetisRemoteExporter implements SpanExporter {
+export class MetisRemoteExporter implements SpanExporter {
   // Error Context
-  public static readonly AWS_CONTEXT = "AWS Context";
-  public static readonly X_RAY = "X Ray Trace Id";
-  public static readonly REQUEST_ID = "Request Id";
-  public static readonly RESPONSE = "Response";
+  public static readonly AWS_CONTEXT = 'AWS Context';
+  public static readonly X_RAY = 'X Ray Trace Id';
+  public static readonly REQUEST_ID = 'Request Id';
+  public static readonly RESPONSE = 'Response';
 
   // Headers
-  public static readonly X_RAY_HEADER = "x-amzn-trace-id";
-  public static readonly REQUEST_ID_HEADER = "x-amzn-requestid";
+  public static readonly X_RAY_HEADER = 'x-amzn-trace-id';
+  public static readonly REQUEST_ID_HEADER = 'x-amzn-requestid';
 
   private _sendingPromises: Promise<unknown>[] = [];
   private _isShutdown: boolean;
 
   constructor(
     private exporterUrl: string,
-    private exporterApiKey: string,
+    private apiKey: string,
     private exporterOptions: MetisRemoteExporterOptions,
-  ) {
-    this.exporterUrl = exporterUrl;
-    this.exporterApiKey = exporterApiKey;
-    this.exporterOptions = exporterOptions;
-  }
+  ) {}
 
   private static error(e?: any) {
     return {
@@ -44,25 +42,25 @@ class MetisRemoteExporter implements SpanExporter {
 
   private getHeaders(data: string) {
     return {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "Content-Length": data.length,
-      "x-api-key": this.exporterApiKey,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'Content-Length': data.length,
+      'x-api-key': this.apiKey,
     };
   }
 
   private static transformKind(kind: SpanKind) {
     switch (kind) {
       case SpanKind.CLIENT:
-        return "SpanKind.CLIENT";
+        return 'SpanKind.CLIENT';
       case SpanKind.CONSUMER:
-        return "SpanKind.CONSUMER";
+        return 'SpanKind.CONSUMER';
       case SpanKind.INTERNAL:
-        return "SpanKind.INTERNAL";
+        return 'SpanKind.INTERNAL';
       case SpanKind.PRODUCER:
-        return "SpanKind.PRODUCER";
+        return 'SpanKind.PRODUCER';
       case SpanKind.SERVER:
-        return "SpanKind.SERVER";
+        return 'SpanKind.SERVER';
       default:
         throw Error(`Unknwon kind: ${kind}`);
     }
@@ -71,13 +69,13 @@ class MetisRemoteExporter implements SpanExporter {
   private static transformStatusCode(code: SpanStatusCode) {
     switch (code) {
       case SpanStatusCode.ERROR:
-        return "ERROR";
+        return 'ERROR';
       case SpanStatusCode.OK:
-        return "OK";
+        return 'OK';
       case SpanStatusCode.UNSET:
-        return "UNSET";
+        return 'UNSET';
       default:
-        throw Error("Unknown status code: ${code}");
+        throw Error('Unknown status code: ${code}');
     }
   }
 
@@ -119,7 +117,7 @@ class MetisRemoteExporter implements SpanExporter {
 
   private static isPrismaQuerySpan(span: ReadableSpan) {
     return (
-      span.instrumentationLibrary.name === "prisma" &&
+      span.instrumentationLibrary.name === 'prisma' &&
       DB_STATEMENT in span.attributes
     );
   }
@@ -180,7 +178,7 @@ class MetisRemoteExporter implements SpanExporter {
           await this.exporterOptions.postFn(data);
         } else {
           const options = {
-            method: "POST",
+            method: 'POST',
             headers: this.getHeaders(dataString),
           };
 
@@ -191,23 +189,28 @@ class MetisRemoteExporter implements SpanExporter {
             3,
           );
 
+          const contexts = {
+            [MetisRemoteExporter.AWS_CONTEXT]: {
+              [MetisRemoteExporter.X_RAY]: response.headers[
+                MetisRemoteExporter.X_RAY_HEADER
+              ] as string,
+              [MetisRemoteExporter.REQUEST_ID]: response.headers[
+                MetisRemoteExporter.REQUEST_ID_HEADER
+              ] as string,
+              [MetisRemoteExporter.RESPONSE]: response.text,
+            },
+          };
+
           if (MetisRemoteExporter.shouldReport(response.statusCode)) {
             const error = new Error(
               `Unable to send spans, status code: ${response.statusCode}`,
             );
-            const contexts = {
-              [MetisRemoteExporter.AWS_CONTEXT]: {
-                [MetisRemoteExporter.X_RAY]: response.headers[
-                  MetisRemoteExporter.X_RAY_HEADER
-                ] as string,
-                [MetisRemoteExporter.REQUEST_ID]: response.headers[
-                  MetisRemoteExporter.REQUEST_ID_HEADER
-                ] as string,
-                [MetisRemoteExporter.RESPONSE]: response.text,
-              },
-            };
-            this.exporterOptions.errorHandler?.(error, contexts);
+            this.handleError(error, contexts);
             return MetisRemoteExporter.error(error);
+          }
+
+          if (process.env.DEBUG) {
+            console.log(JSON.stringify(contexts, null, 2));
           }
         }
       } catch (e) {
@@ -228,7 +231,7 @@ class MetisRemoteExporter implements SpanExporter {
         setTimeout(() =>
           resultCallback({
             code: ExportResultCode.FAILED,
-            error: new Error("Exporter has been shutdown"),
+            error: new Error('Exporter has been shutdown'),
           }),
         );
         return;
@@ -256,14 +259,18 @@ class MetisRemoteExporter implements SpanExporter {
         this._sendingPromises.splice(index, 1);
       };
       promise.then(popPromise, (e: any) => {
-        this.exporterOptions.errorHandler?.(e);
+        this.handleError(e);
         popPromise();
         resultCallback(MetisRemoteExporter.error(e));
       });
     } catch (e: any) {
-      this.exporterOptions.errorHandler?.(e);
+      this.handleError(e);
       resultCallback(MetisRemoteExporter.error(e));
     }
+  }
+
+  handleError(error: any, contexts?: Contexts) {
+    this.exporterOptions.errorHandler?.(error, contexts);
   }
 
   shutdown(): Promise<void> {
@@ -276,4 +283,35 @@ class MetisRemoteExporter implements SpanExporter {
   }
 }
 
-export default MetisRemoteExporter;
+export function getMetisExporter(
+  apiKey: string,
+  exporterUrl?: string,
+  options?: MetisRemoteExporterOptions,
+  print: boolean = false,
+) {
+  const configuration = ConfigurationHandler.getMergedConfig({
+    apiKey,
+    exporterUrl,
+  });
+  const combinedErrorHandler = (error: any, contexts?: Contexts) => {
+    // TODO: should I try catch here? what do I do with the error?
+    baseErrorHandler.handle(error, contexts);
+    if (options.errorHandler) {
+      options.errorHandler(error, contexts);
+    }
+  };
+  return new MetisRemoteExporter(
+    configuration.exporterUrl,
+    configuration.apiKey,
+    {
+      postFn: options?.postFn,
+      postHook: (data: string[]) => {
+        if (print) {
+          const items = data.map((i: string) => JSON.parse(i));
+          console.log(JSON.stringify(items, null, 2));
+        }
+      },
+      errorHandler: combinedErrorHandler,
+    },
+  );
+}

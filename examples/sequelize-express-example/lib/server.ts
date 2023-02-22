@@ -1,11 +1,9 @@
+const express = require("express");
 import * as http from "http";
-import { Tracer } from "@opentelemetry/api";
-import * as express from "express";
 import { newSequelizeClient } from "sequelize-client";
 import credentials from "./credentials";
 
 export default function start(
-  _: Tracer,
   shutdownInstrumentation: () => Promise<void>,
 ): http.Server {
   const app = express();

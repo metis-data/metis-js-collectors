@@ -1,4 +1,4 @@
-{
+  {
   "compilerOptions": {
     "declaration": true,
     "noImplicitAny": false,
@@ -11,6 +11,10 @@
     "lib": ["es6"],
     "module": "commonjs"
   },
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ],
   "typeAcquisition": {
     "include": ["jest"]
   }

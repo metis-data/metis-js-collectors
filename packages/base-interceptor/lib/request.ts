@@ -1,10 +1,11 @@
-import * as https from "https";
+import * as https from 'https';
 
 export type Response = {
   statusCode: number;
-  json: any;
+  json?: any;
   text: string;
   headers: { [key: string]: string | string[] };
+  error?: Error;
 };
 
 export function shouldRetry(status: number): boolean {
@@ -23,6 +24,9 @@ export async function postWithRetries(
 
     try {
       response = await post(url, data, options);
+      if (response.error) {
+        throw response.error;
+      }
     } catch (e: any) {
       // If we there are no more retries just throw it.
       if (retries === 0) {
@@ -48,26 +52,36 @@ export async function post(
   return new Promise((resolve, reject) => {
     const req = https.request(url, options, (res) => {
       const body = [];
-      res.on("data", (chunk) => body.push(chunk));
-      res.on("end", () => {
-        const text = Buffer.concat(body).toString();
-        const json = JSON.parse(text);
-        resolve({
-          headers: res.headers,
-          statusCode: res.statusCode,
-          json,
-          text,
-        });
+      res.on('data', (chunk) => body.push(chunk));
+      res.on('end', () => {
+        let text;
+        try {
+          text = Buffer.concat(body).toString();
+          const json = JSON.parse(text);
+          resolve({
+            headers: res.headers,
+            statusCode: res.statusCode,
+            json,
+            text,
+          });
+        } catch (e) {
+          resolve({
+            headers: res.headers,
+            statusCode: res.statusCode,
+            text,
+            error: e,
+          });
+        }
       });
     });
 
-    req.on("error", (err) => {
+    req.on('error', (err) => {
       reject(err);
     });
 
-    req.on("timeout", () => {
+    req.on('timeout', () => {
       req.destroy();
-      reject(new Error("Request time out"));
+      reject(new Error('Request time out'));
     });
 
     req.write(data);

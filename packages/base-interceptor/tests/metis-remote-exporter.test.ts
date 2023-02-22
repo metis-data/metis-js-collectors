@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, jest } from "@jest/globals";
+import { describe, expect, it, beforeEach, jest } from '@jest/globals';
 import {
   SpanKind,
   SpanContext,
@@ -6,20 +6,21 @@ import {
   SpanStatus,
   Attributes,
   Link,
-} from "@opentelemetry/api";
-import { ExportResult, ExportResultCode } from "@opentelemetry/core";
-import { Resource } from "@opentelemetry/resources";
-import { ReadableSpan, TimedEvent } from "@opentelemetry/sdk-trace-base";
-import MetisRemoteExporter from "../lib/metis-remote-exporter";
-import { ErrorHanlder, MetisRemoteExporterOptions } from "../lib/types";
-import { TRACK_BY, DB_STATEMENT_METIS } from "../lib/constants";
-import { QUERY } from "./common";
-jest.mock("https");
-import * as https from "https";
+} from '@opentelemetry/api';
+import * as Sentry from '@sentry/node';
+jest.spyOn(Sentry, 'init').mockImplementation(() => {});
+import { ExportResult, ExportResultCode } from '@opentelemetry/core';
+import { Resource } from '@opentelemetry/resources';
+import { ReadableSpan, TimedEvent } from '@opentelemetry/sdk-trace-base';
+import { ErrorHanlder, MetisRemoteExporterOptions } from '../lib/types';
+import { TRACK_BY, DB_STATEMENT_METIS } from '../lib/constants';
+import { QUERY } from './common';
+import { MetisRemoteExporter } from '../lib';
+jest.mock('https');
+import * as https from 'https';
 
-const URL = "https://www.example.com";
-const API_KEY = "an api key";
-
+const URL = 'https://www.example.com';
+const METIS_API_KEY = 'an api key';
 class TestSpan implements ReadableSpan {
   constructor(
     public readonly name: string,
@@ -36,7 +37,7 @@ class TestSpan implements ReadableSpan {
     public readonly resource: Resource,
     public readonly parentSpanId?: string,
     public readonly instrumentationLibrary = {
-      name: "unit-test",
+      name: 'unit-test',
     },
   ) {
     this.name = name;
@@ -60,7 +61,7 @@ const makeTestSpan = (modifier: string, attributes: any = {}) => {
     SpanKind.CLIENT,
     () => ({
       spanId: `span-${modifier}-id`,
-      traceId: "trace-id",
+      traceId: 'trace-id',
       traceFlags: 1,
     }),
     [1, 2],
@@ -74,17 +75,17 @@ const makeTestSpan = (modifier: string, attributes: any = {}) => {
     [4, 5],
     false,
     Resource.default(),
-    "parent-span-id",
+    'parent-span-id',
   );
 };
 
-const SPAN_TRACK_BY_METIS = makeTestSpan("1", { [TRACK_BY]: true });
-const SPAN_STATEMENT = makeTestSpan("2", { [DB_STATEMENT_METIS]: QUERY });
-const SPAN_RANDOM = makeTestSpan("3");
+const SPAN_TRACK_BY_METIS = makeTestSpan('1', { [TRACK_BY]: true });
+const SPAN_STATEMENT = makeTestSpan('2', { [DB_STATEMENT_METIS]: QUERY });
+const SPAN_RANDOM = makeTestSpan('3');
 
 const VALID_SPANS = [SPAN_TRACK_BY_METIS, SPAN_STATEMENT];
 
-const ERROR = new Error("should be handled");
+const ERROR = new Error('should be handled');
 
 const RESOLVE_POST_FN = (_: string[]) => {
   return Promise.resolve();
@@ -95,11 +96,11 @@ const REJECT_POST_FN = (_: string[]) => {
 
 const SUCCESS_EXPORT = { code: ExportResultCode.SUCCESS };
 
-describe("export", () => {
+describe('export', () => {
   let exporter: MetisRemoteExporter;
 
   const setup = (options?: MetisRemoteExporterOptions) =>
-    new MetisRemoteExporter(URL, API_KEY, options);
+    new MetisRemoteExporter(URL, METIS_API_KEY, options);
 
   const setupAndGetData = () => {
     let hookData: string[];
@@ -138,15 +139,15 @@ describe("export", () => {
     exporter = setup();
   });
 
-  it("should not when shutdown", async () => {
+  it('should not when shutdown', async () => {
     await exporter.shutdown();
     await expect(callExport(VALID_SPANS)).resolves.toStrictEqual({
       code: ExportResultCode.FAILED,
-      error: new Error("Exporter has been shutdown"),
+      error: new Error('Exporter has been shutdown'),
     });
   });
 
-  it("should handle execption in hook", async () => {
+  it('should handle exception in hook', async () => {
     exporter = setup({
       postHook: () => {
         throw ERROR;
@@ -158,7 +159,7 @@ describe("export", () => {
     );
   });
 
-  it("should retry three times sending spans when getting 500", async () => {
+  it('should retry three times sending spans when getting 500', async () => {
     let contexts;
     const errorHandler: ErrorHanlder = (_, _contexts?) => {
       contexts = _contexts;
@@ -170,18 +171,18 @@ describe("export", () => {
     expect(https.request).toBeCalledTimes(4);
     expect(result).toStrictEqual({
       code: ExportResultCode.FAILED,
-      error: new Error("Unable to send spans, status code: 500"),
+      error: new Error('Unable to send spans, status code: 500'),
     });
     expect(contexts).toStrictEqual({
       [MetisRemoteExporter.AWS_CONTEXT]: {
-        [MetisRemoteExporter.X_RAY]: "x-ray",
-        [MetisRemoteExporter.REQUEST_ID]: "request-id",
-        [MetisRemoteExporter.RESPONSE]: "{}",
+        [MetisRemoteExporter.X_RAY]: 'x-ray',
+        [MetisRemoteExporter.REQUEST_ID]: 'request-id',
+        [MetisRemoteExporter.RESPONSE]: '{}',
       },
     });
   });
 
-  it("should return success if sent on retry", async () => {
+  it('should return success if sent on retry', async () => {
     exporter = setup({});
     // @ts-ignore
     https.setCountToSuccess(2);
@@ -195,7 +196,7 @@ describe("export", () => {
     https.resetCountToSuccess();
   });
 
-  it("should handle failure in sending spans", async () => {
+  it('should handle failure in sending spans', async () => {
     exporter = setup({
       postFn: REJECT_POST_FN,
     });
@@ -205,7 +206,7 @@ describe("export", () => {
     });
   });
 
-  it("should not throw, it should call handler", async () => {
+  it('should not throw, it should call handler', async () => {
     // Sending undefined span should never happen by the system
     // and it would cause an exception so it’s useful for this test.
     const options = { errorHandler: jest.fn() };
@@ -215,7 +216,7 @@ describe("export", () => {
     expect(options.errorHandler).toBeCalledTimes(1);
   });
 
-  it("should filter spans ", async () => {
+  it('should filter spans ', async () => {
     const getter = setupAndGetData();
     await expect(callExport([SPAN_RANDOM])).resolves.toStrictEqual(
       SUCCESS_EXPORT,
@@ -227,7 +228,7 @@ describe("export", () => {
     expect(hookData).toStrictEqual(undefined);
   });
 
-  it("should send spans and call hook", async () => {
+  it('should send spans and call hook', async () => {
     const getter = setupAndGetData();
     await expect(callExport(VALID_SPANS)).resolves.toStrictEqual(
       SUCCESS_EXPORT,
@@ -237,7 +238,7 @@ describe("export", () => {
     expect(hookData).toMatchSnapshot();
   });
 
-  it("should split data when too big", async () => {
+  it('should split data when too big', async () => {
     const getter = setupAndGetData();
     const spans = [];
     for (let i = 0; i < 200; i++) {

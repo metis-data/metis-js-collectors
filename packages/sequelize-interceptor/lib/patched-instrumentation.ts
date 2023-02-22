@@ -1,16 +1,16 @@
-import * as shimmer from "shimmer";
-import * as Sequelize from "sequelize";
-import { trace, context } from "@opentelemetry/api";
+import * as shimmer from 'shimmer';
+import * as Sequelize from 'sequelize';
+import { trace, context } from '@opentelemetry/api';
 import {
   SequelizeInstrumentation,
   SequelizeInstrumentationConfig,
-} from "opentelemetry-instrumentation-sequelize";
+} from 'opentelemetry-instrumentation-sequelize';
 import {
   addPlanToSpan,
   getPGPlan,
   PlanType,
   QueryRunner,
-} from "@metis-data/base-interceptor";
+} from '@metis-data/base-interceptor';
 
 export default class PatchedSequelizeInstrumentation extends SequelizeInstrumentation {
   constructor(
@@ -27,7 +27,7 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
   }
 
   private setWrapped(obj: any, wrapped: boolean): void {
-    Object.defineProperty(obj, "__wrapped", {
+    Object.defineProperty(obj, '__wrapped', {
       value: wrapped,
       writable: true,
       configurable: true,
@@ -48,20 +48,21 @@ export default class PatchedSequelizeInstrumentation extends SequelizeInstrument
       // The span should be the query span and not the request span.
       shimmer.wrap(
         moduleExports.Sequelize.prototype,
-        "query",
+        'query',
         function (original: () => Promise<any>) {
           return async function (sql: any, _: any) {
             try {
               // Getting the span, this should be the query span.
               const span = trace.getSpan(context.active());
               const query = sql?.query ? sql.query : sql;
-              const plan = await getPGPlan(
-                query,
-                self.planType,
-                self.queryRunner,
-              );
-
-              addPlanToSpan(span, plan);
+              if (query) {
+                const plan = await getPGPlan(
+                  query,
+                  self.planType,
+                  self.queryRunner,
+                );
+                addPlanToSpan(span, plan);
+              }
             } catch (e: any) {
               self.errorHandler(e);
             }
