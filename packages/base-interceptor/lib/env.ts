@@ -1,9 +1,9 @@
-import * as process from "process";
+import * as process from 'process';
 
-export const METIS_TAG_PREFIX = "METIS_TAG";
+export const METIS_TAG_PREFIX = 'METIS_TAG';
 
 function extractKeyName(metisKey: string) {
-  return metisKey.replace(METIS_TAG_PREFIX + "_", "").toLocaleLowerCase();
+  return metisKey.replace(METIS_TAG_PREFIX + '_', '').toLocaleLowerCase();
 }
 
 export function extractAdditionalTagsFromEnvVar() {

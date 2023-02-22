@@ -1,10 +1,10 @@
-import SequelizeExpressInterceptor from "@metis-data/sequelize-express-interceptor";
-import { newSequelizeInstance } from "sequelize-client";
-import setupShutdown from "./shutdown";
-import credentials from "./credentials";
+import { SequelizeExpressInterceptor } from '@metis-data/sequelize-express-interceptor';
+import { newSequelizeInstance } from 'sequelize-client';
+import setupShutdown from './shutdown';
+import credentials from './credentials';
 
 const interceptor = SequelizeExpressInterceptor.create({
-  serviceName: "sequelize-express-example", // The name of the service
+  serviceName: 'sequelize-express-example', // The name of the service
   serviceVersion: process.env.npm_package_version, // The version of the service
 });
 
@@ -20,7 +20,7 @@ interceptor.instrument(
 
 // Loading the server after setup of instrumentation because the setup
 // is patching dependencies that would be used in the server.
-import startServer from "./server";
+import startServer from './server';
 
-const server = startServer(interceptor.tracer(), interceptor.uninstrument);
+const server = startServer(interceptor.uninstrument);
 setupShutdown(server, interceptor.uninstrument);

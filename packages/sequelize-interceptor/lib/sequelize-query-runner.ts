@@ -1,5 +1,5 @@
-import { QueryRunner } from "@metis-data/base-interceptor/dist/plan";
-import { Sequelize } from "sequelize-typescript";
+import { QueryRunner } from '@metis-data/base-interceptor/dist/plan';
+import { Sequelize } from 'sequelize-typescript';
 
 export default class SequelizeQueryRunner implements QueryRunner {
   constructor(private sequelize: Sequelize) {}

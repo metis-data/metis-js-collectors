@@ -1,42 +1,15 @@
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { registerInstrumentations } from "@opentelemetry/instrumentation";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { Instrumentation } from "@opentelemetry/instrumentation";
-import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
-import { getResource } from "./resource";
-import MetisRemoteExporter from "./metis-remote-exporter";
-import * as errorHandler from "./error-hanlder";
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+const opentelemetry = require('@opentelemetry/api');
 import {
-  Contexts,
-  ErrorHanlder,
-  InstrumentationOptions,
-  InstrumentationResult,
-} from "./types";
-import { PlanFetcher } from "./plan";
-
-function getMetisExporter(
-  exporterUrl: string,
-  exporterApiKey: string,
-  errorHandler: ErrorHanlder,
-  planFetcher: PlanFetcher,
-  print: boolean = false,
-) {
-  return new MetisRemoteExporter(exporterUrl, exporterApiKey, {
-    postHook: (data: string[]) => {
-      if (print) {
-        const items = data.map((i: string) => JSON.parse(i));
-        console.log(JSON.stringify(items, null, 2));
-      }
-    },
-    errorHandler,
-    planFetcher,
-  });
-}
-
-function shouldInstrument() {
-  const value = process.env.METIS_INSTRUMENTATION || "true";
-  return value.toLocaleLowerCase() === "true" || value === "1";
-}
+  BatchSpanProcessor,
+  ConsoleSpanExporter, // remove
+} from '@opentelemetry/sdk-trace-base';
+import { Instrumentation } from '@opentelemetry/instrumentation';
+import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { getResource } from './resource';
+import { getMetisExporter, MetisRemoteExporter } from './metis-remote-exporter';
+import { InstrumentationOptions, InstrumentationResult } from './types';
 
 const DEFAULT_BATCH_PROCESSOR_CONFIG = {
   maxQueueSize: 100,
@@ -45,48 +18,53 @@ const DEFAULT_BATCH_PROCESSOR_CONFIG = {
   exportTimeoutMillis: 30000,
 };
 
-export default function instrument(
+export function instrument(
   exporterUrl: string,
-  exporterApiKey: string,
+  apiKey: string,
   serviceName: string,
   serviceVersion: string,
   instrumentations: Instrumentation[],
   options: InstrumentationOptions = { printToConsole: false },
 ): InstrumentationResult | undefined {
-  const combinedErrorHandler = (error: any, contexts?: Contexts) => {
-    // TODO: should I try catch here? what do I do with the error?
-    errorHandler.handle(error, contexts);
-    if (options.errorHandler) {
-      options.errorHandler(error, contexts);
-    }
-  };
+  let exporter: MetisRemoteExporter;
 
   try {
-    if (!shouldInstrument()) {
-      return;
+    const isDisabled = ['true', '1'].includes(process.env?.METIS_DISABLED?.toLowerCase());
+
+    if (isDisabled) {
+      return {
+        async uninstrument(): Promise<void> {
+          return;
+        }
+      } as InstrumentationResult;
     }
 
     const tracerProvider = new NodeTracerProvider({
       resource: getResource(serviceName, serviceVersion),
     });
 
-    const exporter = getMetisExporter(
+    exporter = getMetisExporter(
+      apiKey,
       exporterUrl,
-      exporterApiKey,
-      combinedErrorHandler,
-      options.planFetcher,
+      options,
       options.printToConsole,
     );
 
     tracerProvider.addSpanProcessor(
       new BatchSpanProcessor(exporter, DEFAULT_BATCH_PROCESSOR_CONFIG),
     );
+    if (process.env.DEBUG) {
+      tracerProvider.addSpanProcessor(
+        new BatchSpanProcessor(new ConsoleSpanExporter()),
+      );
+    }
 
     // Makes sure we keep the same context between different async
     // operations.
     const contextManager = new AsyncHooksContextManager();
+    opentelemetry.context.setGlobalContextManager(contextManager);
     contextManager.enable();
-    tracerProvider.register({ contextManager });
+    tracerProvider.register();
 
     const uninstrument = registerInstrumentations({
       tracerProvider,
@@ -94,14 +72,14 @@ export default function instrument(
     });
 
     return {
-      tracer: tracerProvider.getTracer("metis-tracer"),
+      tracerProvider,
       uninstrument: () => {
         uninstrument();
         return exporter.shutdown();
       },
     };
   } catch (error: any) {
-    combinedErrorHandler(error);
+    exporter?.handleError(error);
     return;
   }
 }

@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["tracing"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("PG_CONNECTION_STRING")
+}
+
+model countries {
+  country_id                 Int               @id(map: "pk_application_countries") @default(autoincrement())
+  country_name               String            @db.VarChar(120)
+  formal_name                String            @db.VarChar(120)
+  iso_alpha_3_code           String?           @db.VarChar(6)
+  iso_numeric_code           Int?
+  country_type               String?           @db.VarChar(40)
+  latest_recorded_population BigInt?
+  continent                  String            @db.VarChar(60)
+  region                     String            @db.VarChar(60)
+  subregion                  String            @db.VarChar(60)
+  last_edited_by             Int
+  state_provinces            state_provinces[]
+}
+
+model cities {
+  city_id                                                      Int                 @id(map: "pk_application_cities") @default(autoincrement())
+  city_name                                                    String              @db.VarChar(100)
+  state_province_id                                            Int
+  latest_recorded_population                                   BigInt?
+  last_edited_by                                               Int
+  state_provinces                                              state_provinces     @relation(fields: [state_province_id], references: [state_province_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cities_state_provinces_state_province_id")
+  @@index([city_name])
+}
+
+model state_provinces {
+  state_province_id          Int       @id(map: "pk_application_state_provinces") @default(autoincrement())
+  state_province_code        String    @db.VarChar(10)
+  state_province_name        String    @db.VarChar(100)
+  country_id                 Int
+  sales_territory            String    @db.VarChar(100)
+  latest_recorded_population BigInt?
+  last_edited_by             Int
+  countries                  countries @relation(fields: [country_id], references: [country_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_state_provinces_countries_country_id")
+  cities                     cities[]
+}

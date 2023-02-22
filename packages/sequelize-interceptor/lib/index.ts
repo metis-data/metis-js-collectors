@@ -1,8 +1,8 @@
-import { Span, Tracer } from "@opentelemetry/api";
-import { attachTraceIdToQuery, PlanType } from "@metis-data/base-interceptor";
-import SequelizeQueryRunner from "./sequelize-query-runner";
-import PatchedSequelizeInstrumentation from "./patched-instrumentation";
-import { Sequelize } from "sequelize-typescript";
+import { Span, Tracer } from '@opentelemetry/api';
+import { attachTraceIdToQuery, PlanType } from '@metis-data/base-interceptor';
+import SequelizeQueryRunner from './sequelize-query-runner';
+import PatchedSequelizeInstrumentation from './patched-instrumentation';
+import { Sequelize } from 'sequelize-typescript';
 
 export function getSequelizeInstrumentation(
   sequelize: Sequelize,
@@ -16,7 +16,7 @@ export function getSequelizeInstrumentation(
   Object.keys(require.cache)
     .filter(
       (key: string) =>
-        key.includes("/sequelize-typescript/") || key.includes("/sequelize/"),
+        key.includes('/sequelize-typescript/') || key.includes('/sequelize/'),
     )
     .forEach((moduleName) => {
       delete require.cache[moduleName];

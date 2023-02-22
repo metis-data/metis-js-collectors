@@ -12,6 +12,7 @@ export type Credentials = {
 };
 
 export function newSequelizeInstance(credentials: Credentials) {
+  const { Sequelize } = require("sequelize-typescript");
   return new Sequelize(
     credentials.database,
     credentials.user,

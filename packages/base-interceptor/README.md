@@ -10,9 +10,9 @@ Merge interceptor configuration from code (e.g. from developer), environment and
 import {
   Configuration,
   ConfigurationHandler,
-} from "@metis-data/base-interceptor";
+} from '@metis-data/base-interceptor';
 
-const config = { serviceName: "test" };
+const config = { serviceName: 'test' };
 
 const mergedConfig = ConfigurationHandler.getMergedConfig(config);
 ```
@@ -24,9 +24,7 @@ const mergedConfig = ConfigurationHandler.getMergedConfig(config);
 Mark a span as tracked by Metis. **Only** Spans with this tag would be exported to Metis' server (assuming `MetisRemoteExporter` is used).
 
 ```javascript
-import {
-  markSpan
-} from "@metis-data/base-interceptor";
+import { markSpan } from '@metis-data/base-interceptor';
 
 markSpan(span);
 ```
@@ -36,9 +34,7 @@ markSpan(span);
 Extract a query from a span using the common db related attributes.
 
 ```javascript
-import {
-  getQueryFromSpan
-} from "@metis-data/base-interceptor";
+import { getQueryFromSpan } from '@metis-data/base-interceptor';
 
 const query = getQueryFromSpan(span);
 ```
@@ -51,9 +47,7 @@ Example:
 `SELECT * FROM table /traceparent=traceId-spanId**/`
 
 ```javascript
-import {
-  attachTraceIdToQuery
-} from "@metis-data/base-interceptor";
+import { attachTraceIdToQuery } from '@metis-data/base-interceptor';
 
 attachTraceIdToQuery(span);
 ```
@@ -63,9 +57,7 @@ attachTraceIdToQuery(span);
 Add a given plan Object to a given span.
 
 ```javascript
-import {
-  addPlanToSpan
-} from "@metis-data/base-interceptor";
+import { addPlanToSpan } from '@metis-data/base-interceptor';
 
 addPlanToSpan(span, plan);
 ```

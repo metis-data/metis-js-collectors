@@ -1,19 +1,19 @@
-import MetisRemoteExporter from "../../lib/metis-remote-exporter";
+import { MetisRemoteExporter } from '../../lib';
 
 // Need to call end so the promise would be resolved.
 const on = (str: string, fn: (v?: any) => void) => {
-  if (str === "end") {
+  if (str === 'end') {
     fn();
-  } else if (str === "data") {
-    fn(Buffer.from("{}"));
+  } else if (str === 'data') {
+    fn(Buffer.from('{}'));
   }
 };
 
 // I can’t use constants for reason, I think it’s because that we run this
 // code from jest mock or something.
 const headers = {
-  ["x-amzn-trace-id"]: "x-ray",
-  ["x-amzn-requestid"]: "request-id",
+  ['x-amzn-trace-id']: 'x-ray',
+  ['x-amzn-requestid']: 'request-id',
 };
 
 const base = { on, headers };

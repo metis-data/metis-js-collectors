@@ -1,50 +1,40 @@
-import { Controller, Get, Param } from "@nestjs/common";
-import { PrismaService } from "./app.service";
-import { UninstrumentService } from "./uninstrument.service";
-import { City, Country, StatesProvince } from "db-client";
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { PrismaService } from './modules/prisma/prisma.service';
 
 @Controller()
 export class AppController {
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly uninstrumentService: UninstrumentService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  @Get("/countries")
-  getCountries(): Promise<Country[]> {
-    return this.prismaService.getCountries();
+  @Get('/countries')
+  getCountries(): Promise<any> {
+    return this.prismaService.countries.findMany();
   }
 
-  @Get("/countries/:id")
-  getCountryById(@Param("id") id: number): Promise<Country> {
-    // @ts-ignore
-    return this.prismaService.getCountryById(parseInt(id));
+  @Get('/countries/:id')
+  getCountryById(@Param('id') id: string): Promise<any> {
+    return this.prismaService.countries.findUnique({
+      where: { country_id: parseInt(id) },
+    });
   }
 
-  @Get("/countries/:id")
-  async getCityById(
-    @Param("id") id: number,
-  ): Promise<{ city: City; state: StatesProvince }> {
-    const city = await this.prismaService.getCityById(id);
-    // @ts-ignore-next-error
-    const state = await this.prismaService.getStateById(city.state_province_id);
+  @Get('/cities/:id')
+  async getCityById(@Param('id') id: string): Promise<any> {
+    const city = await this.prismaService.cities.findUnique({
+      where: { city_id: parseInt(id) },
+    });
+    const state = await this.prismaService.state_provinces.findUnique({
+      where: { state_province_id: parseInt(id) },
+    });
     return {
       city,
       state,
     };
   }
 
-  @Get("/fail")
-  async fail(): Promise<void> {
-    try {
-      await this.prismaService.raw("SELECT * FROM NoWhere");
-    } catch (_: any) {
-      // Ignore
-    }
-  }
-
-  @Get("/shutdown-instrumentation")
-  async uninstrument(): Promise<void> {
-    await this.uninstrumentService.uninstrument();
+  @Post('/countries')
+  async createCountry(@Body() body: any): Promise<any> {
+    return this.prismaService.countries.create({
+      data: body,
+    });
   }
 }
