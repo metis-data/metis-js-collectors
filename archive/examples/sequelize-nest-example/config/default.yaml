@@ -1,0 +1,12 @@
+log:
+  level: info
+  filename: "server-logs.json"
+secretKey: ""
+postgres:
+  connection:
+    user: ""
+    password: ""
+    host: ""
+    database: ""
+    port: 5432
+    
