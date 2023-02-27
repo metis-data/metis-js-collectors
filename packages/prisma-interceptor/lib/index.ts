@@ -2,9 +2,7 @@ import { MetisPrismaInstrumentation } from './prisma-instrumentation';
 import { PrismaClient } from '@prisma/client';
 import { PrismaInstrumentationOptions } from './types';
 
-export function getPrismaInstrumentation(
-  options?: PrismaInstrumentationOptions,
-): MetisPrismaInstrumentation {
+export function getPrismaInstrumentation(options?: PrismaInstrumentationOptions): MetisPrismaInstrumentation {
   return MetisPrismaInstrumentation.getInstrumentation(options);
 }
 
@@ -20,4 +18,5 @@ export {
   createFilter,
   getMetisExporter,
   ConfigurationHandler,
+  MetisHttpInstrumentation,
 } from '@metis-data/base-interceptor';

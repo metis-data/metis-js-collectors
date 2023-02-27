@@ -1,5 +1,4 @@
 import opentelemetry from '@opentelemetry/api';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import {
@@ -9,14 +8,8 @@ import {
   SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import {
-  getPrismaInstrumentation,
-  createFilter,
-  markSpan,
-  getMetisExporter,
-} from '@metis-data/prisma-interceptor';
+import { getPrismaInstrumentation, getMetisExporter, MetisHttpInstrumentation } from '@metis-data/prisma-interceptor';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { IncomingMessage } from 'http';
 
 export const startMetisInstrumentation = () => {
   const tracerProvider = new BasicTracerProvider({
@@ -30,9 +23,9 @@ export const startMetisInstrumentation = () => {
 
   tracerProvider.addSpanProcessor(new BatchSpanProcessor(metisExporter));
 
-  tracerProvider.addSpanProcessor(
-    new SimpleSpanProcessor(new ConsoleSpanExporter()),
-  );
+  if (process.env.OTEL_DEBUG) {
+    tracerProvider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+  }
 
   const contextManager = new AsyncHooksContextManager();
 
@@ -41,20 +34,8 @@ export const startMetisInstrumentation = () => {
 
   tracerProvider.register();
 
-  const urlsFilter = createFilter([/favicon.ico/]);
+  const excludeUrls = [/favicon.ico/];
   registerInstrumentations({
-    instrumentations: [
-      new HttpInstrumentation({
-        ignoreOutgoingRequestHook: () => true,
-        ignoreIncomingRequestHook: (request: IncomingMessage) => {
-          if (request.url) {
-            return urlsFilter(request.url);
-          }
-          return false;
-        },
-        requestHook: markSpan,
-      }),
-      getPrismaInstrumentation(),
-    ],
+    instrumentations: [new MetisHttpInstrumentation(excludeUrls), getPrismaInstrumentation()],
   });
 };
