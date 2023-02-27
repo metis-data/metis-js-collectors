@@ -1,0 +1,13 @@
+{
+  "name": "root",
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/parser": "^5.49.0",
+    "eslint": "^8.33.0",
+    "lerna": "^5.1.8",
+    "nx": "^14.4.2",
+    "prettier": "^2.7.1",
+    "typescript": "^4.9.3"
+  }
+}

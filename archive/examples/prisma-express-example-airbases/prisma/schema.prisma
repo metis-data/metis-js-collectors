@@ -1,0 +1,162 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["tracing"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PG_CONNECTION_STRING")
+}
+
+model account {
+  account_id        Int             @id @default(autoincrement())
+  login             String
+  first_name        String
+  last_name         String
+  frequent_flyer_id Int?
+  update_ts         DateTime?       @db.Timestamptz(6)
+  frequent_flyer    frequent_flyer? @relation(fields: [frequent_flyer_id], references: [frequent_flyer_id], onDelete: NoAction, onUpdate: NoAction, map: "frequent_flyer_id_fk")
+  booking           booking[]
+  passenger         passenger[]
+  phone             phone[]
+}
+
+model aircraft {
+  model    String?
+  range    Decimal  @db.Decimal
+  class    Int
+  velocity Decimal  @db.Decimal
+  code     String   @id
+  flight   flight[]
+}
+
+model airport {
+  airport_code String    @id @db.Char(3)
+  airport_name String
+  city         String
+  airport_tz   String
+  continent    String?
+  iso_country  String?
+  iso_region   String?
+  intnl        Boolean
+  update_ts    DateTime? @db.Timestamptz(6)
+  flight       flight[]
+}
+
+model boarding_pass {
+  pass_id        Int          @id @default(autoincrement())
+  passenger_id   BigInt?
+  booking_leg_id BigInt?
+  seat           String?
+  boarding_time  DateTime?    @db.Timestamptz(6)
+  precheck       Boolean?
+  update_ts      DateTime?    @db.Timestamptz(6)
+  booking_leg    booking_leg? @relation(fields: [booking_leg_id], references: [booking_leg_id], onDelete: NoAction, onUpdate: NoAction, map: "booking_leg_id_fk")
+  passenger      passenger?   @relation(fields: [passenger_id], references: [passenger_id], onDelete: NoAction, onUpdate: NoAction, map: "passenger_id_fk")
+
+  @@index([boarding_time], map: "bp_boarding_time_idx")
+  @@index([passenger_id], map: "idx_passenger_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model boarding_pass_no_indexes {
+  pass_id        Int?
+  passenger_id   BigInt?
+  booking_leg_id BigInt?
+  seat           String?
+  boarding_time  DateTime? @db.Timestamptz(6)
+  precheck       Boolean?
+  update_ts      DateTime? @db.Timestamptz(6)
+
+  @@ignore
+}
+
+model booking {
+  booking_id   BigInt        @id
+  booking_ref  String        @unique
+  booking_name String?
+  account_id   Int?
+  email        String
+  phone        String
+  update_ts    DateTime?     @db.Timestamptz(6)
+  price        Decimal?      @db.Decimal(7, 2)
+  account      account?      @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction, map: "booking_account_id_fk")
+  booking_leg  booking_leg[]
+  passenger    passenger[]
+}
+
+model booking_leg {
+  booking_leg_id BigInt             @id @default(autoincrement())
+  booking_id     BigInt
+  flight_id      Int
+  leg_num        Int?
+  is_returning   Boolean?
+  update_ts      DateTime?       @db.Timestamptz(6)
+  booking        booking         @relation(fields: [booking_id], references: [booking_id], onDelete: NoAction, onUpdate: NoAction, map: "booking_id_fk")
+  flight         flight          @relation(fields: [flight_id], references: [flight_id], onDelete: NoAction, onUpdate: NoAction, map: "flight_id_fk")
+  boarding_pass  boarding_pass[]
+}
+
+model flight {
+  flight_id           Int           @id @default(autoincrement())
+  flight_no           String
+  scheduled_departure DateTime      @db.Timestamptz(6)
+  scheduled_arrival   DateTime      @db.Timestamptz(6)
+  departure_airport   String        @db.Char(3)
+  arrival_airport     String        @db.Char(3)
+  status              String
+  aircraft_code       String        @db.Char(3)
+  actual_departure    DateTime?     @db.Timestamptz(6)
+  actual_arrival      DateTime?     @db.Timestamptz(6)
+  update_ts           DateTime?     @db.Timestamptz(6)
+  aircraft            aircraft      @relation(fields: [aircraft_code], references: [code], onDelete: NoAction, onUpdate: NoAction, map: "aircraft_code_fk")
+  airport             airport       @relation(fields: [departure_airport], references: [airport_code], onDelete: NoAction, onUpdate: NoAction, map: "arrival_airport_fk")
+  booking_leg         booking_leg[]
+}
+
+model frequent_flyer {
+  frequent_flyer_id Int       @id @default(autoincrement())
+  first_name        String
+  last_name         String
+  title             String
+  card_num          String
+  level             Int
+  award_points      Int
+  email             String
+  phone             String
+  update_ts         DateTime? @db.Timestamptz(6)
+  account           account[]
+}
+
+model passenger {
+  passenger_id  BigInt             @id @default(autoincrement())
+  booking_id    BigInt
+  booking_ref   String?
+  passenger_no  Int?
+  first_name    String
+  last_name     String
+  account_id    Int?
+  update_ts     DateTime?       @db.Timestamptz(6)
+  age           Int?
+  account       account?        @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction, map: "pass_account_id_fk")
+  booking       booking         @relation(fields: [booking_id], references: [booking_id], onDelete: NoAction, onUpdate: NoAction, map: "pass_booking_id_fk")
+  boarding_pass boarding_pass[]
+}
+
+model phone {
+  phone_id      Int       @id @default(autoincrement())
+  account_id    Int?
+  phone         String?
+  phone_type    String?
+  primary_phone Boolean?
+  update_ts     DateTime? @db.Timestamptz(6)
+  account       account?  @relation(fields: [account_id], references: [account_id], onDelete: NoAction, onUpdate: NoAction, map: "phone_account_id_fk")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model testing {
+  n  Int?
+  n1 Int? @db.Oid
+
+  @@ignore
+}

@@ -1,0 +1,11 @@
+log:
+  level: LOG_LEVEL
+  output: OUTPUT_FILENAME
+secret: APP_SECRET
+postgres:
+  connection:
+    user: PG_CONNECTION_USER
+    password: PG_CONNECTION_PASSWORD
+    host: PG_CONNECTION_HOST
+    database: PG_CONNECTION_DATABASE
+    port: PG_CONNECTION_PORT
