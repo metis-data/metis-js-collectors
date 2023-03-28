@@ -1,0 +1,10 @@
+**/node_modules/
+*~
+**/dist
+**/.env
+.coverage
+.idea
+*/**/local.yaml
+.npmrc
+lerna-debug.log
+js-interceptors.iml

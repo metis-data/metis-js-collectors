@@ -1,0 +1,47 @@
+name: Build
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+    branches: [main, develop]
+
+jobs:
+  build:
+    timeout-minutes: 4
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.5
+          registry-url: 'https://registry.npmjs.org/'
+          scope: '@metis-data'
+
+      - name: Lerna Cache
+        id: lerna-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-lerna-interceptors-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-lerna-interceptors-
+
+      - run: lerna link
+
+      - run: lerna bootstrap --no-private
+
+      - name: Build
+        run: lerna run build --no-private
+
+      - name: Test
+        run: lerna run test --no-private
+
